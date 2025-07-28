@@ -261,7 +261,7 @@ bool CGaussBlurFilter<T>::Filter(LPCVOID pSrc, LPVOID pDest, int width, int heig
 	//判断是否启用多线程处理
 	if(m_bMultiThreads && m_nThreadCount > 1)
 	{
-		ThreadCount = min(m_nThreadCount, absHeight);
+		ThreadCount = std::min(m_nThreadCount, absHeight);
 
 		CGaussBlurThreadParams<T> *p1 = new CGaussBlurThreadParams<T>[ThreadCount];
 		HANDLE *pHandles = new HANDLE[ThreadCount];
