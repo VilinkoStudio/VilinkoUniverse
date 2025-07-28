@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "framework.h"
- 
+
 class VertexUIColorStandard
 {
 public:
@@ -21,9 +21,9 @@ public:
 		int bg_d2_r, bg_d2_g, bg_d2_b = 30;
 	};
 	titlebar title;
-	int bg_r = 38;
-	int bg_g = 41;
-	int bg_b = 54;
+	int bg_r = 20;
+	int bg_g = 20;
+	int bg_b = 20;
 	int bg_d1_r, bg_d1_g, bg_d1_b = 10;
 	int bg_d2_r, bg_d2_g, bg_d2_b = 30;
 
@@ -45,14 +45,14 @@ int GetMinValue(int num, int min)
 	else return num;
 }
 
-int SetColorBright(int c,int b,bool DarkModeNotChange=false)
+int SetColorBright(int c, int b, bool DarkModeNotChange = false)
 {
 	if (c > 128) { if (c - b >= 255)return 255; else return c - b; }
 	else if (DarkModeNotChange == false)return c + b;
 	else return c;
 }
 
-int SetThemedColorBright(int c, int b, int Themed,bool DarkModeNotChange = false)
+int SetThemedColorBright(int c, int b, int Themed, bool DarkModeNotChange = false)
 {
 	if (c > 128) { return Themed; }
 	else if (DarkModeNotChange == false)return c + b;
@@ -74,10 +74,10 @@ unsigned long VuiColorAverage(unsigned long Clr)
 {
 	return (GetRValue(Clr) + GetGValue(Clr) + GetBValue(Clr)) / 3;
 }
-unsigned long VuiMediumChangeToLight(unsigned long Clr,int Val=30)
+unsigned long VuiMediumChangeToLight(unsigned long Clr, int Val = 30)
 {
 	if (((GetRValue(Clr) + GetGValue(Clr) + GetBValue(Clr)) / 3) <= 128)return Clr;
-	else return RGB(GetMaxValue(GetRValue(Clr)+Val,255), GetMaxValue(GetGValue(Clr)+Val, 255), GetMaxValue(GetBValue(Clr)+Val, 255));
+	else return RGB(GetMaxValue(GetRValue(Clr) + Val, 255), GetMaxValue(GetGValue(Clr) + Val, 255), GetMaxValue(GetBValue(Clr) + Val, 255));
 }
 unsigned long VuiDarkChangeToMedium(unsigned long Clr, int Val = 30)
 {
@@ -88,7 +88,7 @@ unsigned long VuiCalcShadow(unsigned long Clr)
 {
 	if (((GetRValue(Clr) + GetGValue(Clr) + GetBValue(Clr)) / 3) <= 128)return RGB(25, 25, 27);
 	else
-		if (((GetRValue(Clr) < GetBValue(Clr)-8) && GetGValue(Clr) < GetBValue(Clr)-8))return RGB(GetRValue(Clr) - 40, GetGValue(Clr) - 40, GetBValue(Clr) - 20);
+		if (((GetRValue(Clr) < GetBValue(Clr) - 8) && GetGValue(Clr) < GetBValue(Clr) - 8))return RGB(GetRValue(Clr) - 40, GetGValue(Clr) - 40, GetBValue(Clr) - 20);
 		else if (((GetGValue(Clr) < GetRValue(Clr) - 8) && GetBValue(Clr) < GetRValue(Clr) - 8))return RGB(GetRValue(Clr) - 20, GetGValue(Clr) - 40, GetBValue(Clr) - 40);
 		else if (((GetRValue(Clr) < GetGValue(Clr) - 8) && GetBValue(Clr) < GetGValue(Clr) - 5))return RGB(GetRValue(Clr) - 40, GetGValue(Clr) - 20, GetBValue(Clr) - 40);
 		else return RGB(190, 190, 194);
@@ -96,9 +96,9 @@ unsigned long VuiCalcShadow(unsigned long Clr)
 unsigned long VuiAddColorValue(unsigned long Clr, int r, int g, int b)
 {
 	int nR, nG, nB;
-	nR = GetMaxValue(GetRValue(Clr)+r,255);
-	nG = GetMaxValue(GetGValue(Clr)+g,255);
-	nB = GetMaxValue(GetBValue(Clr)+b,255);
+	nR = GetMaxValue(GetRValue(Clr) + r, 255);
+	nG = GetMaxValue(GetGValue(Clr) + g, 255);
+	nB = GetMaxValue(GetBValue(Clr) + b, 255);
 	return RGB(nR, nG, nB);
 }
 
@@ -121,7 +121,7 @@ unsigned long VuiDarkenColor(unsigned long Clr, int val)
 	nB = GetMinValue(GetBValue(Clr) - val, 0);
 	return RGB(nR, nG, nB);
 }
-int VuiAOrBOrCMedium(int c,int a,int b,int c1,bool DNC=false)
+int VuiAOrBOrCMedium(int c, int a, int b, int c1, bool DNC = false)
 {
 	if (c > 128)
 	{
@@ -130,15 +130,15 @@ int VuiAOrBOrCMedium(int c,int a,int b,int c1,bool DNC=false)
 	}
 	else return b;
 }
-bool GetBitColor(BYTE* byte,  int x, int y, unsigned int& iRGB)
-{ 
+bool GetBitColor(BYTE* byte, int x, int y, unsigned int& iRGB)
+{
 	int nPixelSize = 4;
 	unsigned int* iBtRGB;
 
-	iBtRGB = (unsigned int*)(byte + (y  * nPixelSize + x * nPixelSize));
+	iBtRGB = (unsigned int*)(byte + (y * nPixelSize + x * nPixelSize));
 	iRGB = RGB(GetBValue(iBtRGB[0]), GetGValue(iBtRGB[0]), GetRValue(iBtRGB[0]));
 	//if (iBtRGB[0] == iRGB[0])
-		return true;
+	return true;
 	//else
 		//return false;
 }
@@ -176,13 +176,13 @@ void VuiColorSystemInit()
 	vuicolor.ctl_d1_r = SetColorBright(vuicolor.bg_r, 35);
 	vuicolor.ctl_d1_g = SetColorBright(vuicolor.bg_g, 35);
 	vuicolor.ctl_d1_b = SetColorBright(vuicolor.bg_b, 35);
-	vuicolor.ctl_blur_r = SetColorBright(vuicolor.bg_r,13);
-	vuicolor.ctl_blur_g = SetColorBright(vuicolor.bg_g,13);
-	vuicolor.ctl_blur_b = SetColorBright(vuicolor.bg_b,13);
-	
+	vuicolor.ctl_blur_r = SetColorBright(vuicolor.bg_r, 13);
+	vuicolor.ctl_blur_g = SetColorBright(vuicolor.bg_g, 13);
+	vuicolor.ctl_blur_b = SetColorBright(vuicolor.bg_b, 13);
+
 	vuicolor.txt_r = VuiBlackOrWhiteOpposite(vuicolor.bg_r);
 	vuicolor.txt_g = VuiBlackOrWhiteOpposite(vuicolor.bg_g);
-	vuicolor.txt_b =VuiBlackOrWhiteOpposite(vuicolor.bg_b);
+	vuicolor.txt_b = VuiBlackOrWhiteOpposite(vuicolor.bg_b);
 }
 
 #define VERTEXUICOLOR_DARKEN RGB(20,20,20)

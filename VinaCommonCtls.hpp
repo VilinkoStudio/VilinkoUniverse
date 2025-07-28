@@ -11,7 +11,7 @@ struct VertexUICtlColor
 {
 	unsigned long color = VERTEXUICOLOR_MIDNIGHT;
 	unsigned long borderColor = VERTEXUICOLOR_MIDNIGHTPLUS;
-	unsigned long innerColor =  VERTEXUICOLOR_WHITEDRAW;
+	unsigned long innerColor = VERTEXUICOLOR_WHITEDRAW;
 	unsigned long hoverColor = VERTEXUICOLOR_MIDNIGHT;
 	unsigned long hoverBorderColor = VERTEXUICOLOR_MIDNIGHTPLUS;
 	unsigned long hoverInnerColor = VERTEXUICOLOR_WHITEDRAW;
@@ -20,7 +20,7 @@ struct VertexUICtlColor
 	unsigned long activeInnerColor = VERTEXUICOLOR_WHITEDRAW;
 
 };
-class VinaButton : public VertexUIControl{
+class VinaButton : public VertexUIControl {
 public:
 	void Set(int x, int y, int cx, int cy, const wchar_t* txt, std::function<void()>events = [] {}, unsigned long clr = VERTEXUICOLOR_MIDNIGHT, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE)
 	{
@@ -78,9 +78,9 @@ public:
 			nClr = RGB(nR, nG, nB);
 			D2DDrawRoundRect(hdc, x + num, y + num, cx - num * 2, cy - num * 2, nClr, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
 
-			D2DDrawText(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-num, txtClr, L"Segoe UI", 1, true);
+			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz - num, txtClr, L"Segoe UI", 1, true);
 		}
-		else if (this->IsHoverd==true)
+		else if (this->IsHoverd == true)
 		{
 			if (flag == 0)
 			{
@@ -99,7 +99,7 @@ public:
 			}
 
 			float num;
-			num = CalcEaseOutCurve(ap, 0,0.5, 10);
+			num = CalcEaseOutCurve(ap, 0, 0.5, 10);
 			/*
 			CompGdiD2D(hWnd, hdc, [this, num](HWND hWnd, HDC hdc) {
 				VertexUI::Window::SimpleShadow::iDropShadow Shadow;
@@ -113,13 +113,13 @@ public:
 				*/
 			unsigned long nClr;
 			int nR, nG, nB;
-			nR = GetMaxValue(GetRValue(Clr)+num*20,255);
-			nG = GetMaxValue(GetGValue(Clr)+num*20,255);
-			nB = GetMaxValue(GetBValue(Clr)+num*20,255);
+			nR = GetMaxValue(GetRValue(Clr) + num * 20, 255);
+			nG = GetMaxValue(GetGValue(Clr) + num * 20, 255);
+			nB = GetMaxValue(GetBValue(Clr) + num * 20, 255);
 			nClr = RGB(nR, nG, nB);
 			D2DDrawRoundRect(hdc, x - num, y - num, cx + num * 2, cy + num * 2, nClr, 8, 1, 1.0f + num, VERTEXUICOLOR_MIDNIGHTPLUS);
 
-			D2DDrawText(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, txtClr, L"Segoe UI", 1, true);
+			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, txtClr, L"Segoe UI", 1, true);
 		}
 		else
 		{
@@ -155,7 +155,7 @@ public:
 					*/
 			}
 			unsigned long nClr = Clr;
-			if (ap !=0)
+			if (ap != 0)
 			{
 				int nR, nG, nB;
 				nR = GetMaxValue(GetRValue(Clr) + num * 20, 255);
@@ -164,7 +164,7 @@ public:
 				nClr = RGB(nR, nG, nB);
 			}
 			D2DDrawRoundRect(hdc, x - num, y - num, cx + num * 2, cy + num * 2, nClr, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
-			D2DDrawText(hdc, txt.c_str(), x,(float)(y+cy/2-txtsz/1.5), cx, cy, txtsz, txtClr,L"Segoe UI",1,true);
+			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, txtClr, L"Segoe UI", 1, true);
 		}
 	}
 
@@ -172,7 +172,8 @@ public:
 	{
 		ap = 0;
 		Refresh(hWnd);
-		vinaFuncMap[_event.c_str()]();
+		func();
+		//if(func)vinaFuncMap[_event.c_str()]();
 		return 0;
 	}
 	virtual int OnMouseDown()
@@ -182,20 +183,20 @@ public:
 		Refresh(hWnd);
 		return 0;
 	}
-	virtual int AddEvent(const vinaPoint& pt,vinaEvent eventtype)
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
 	{
-	
-			if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
-			if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
-				
-			if (eventtype == vinaEvent::mouseOver) { 
-				
-				this->IsHoverd = true;
-				Refresh(hWnd);
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+
+		if (eventtype == vinaEvent::mouseOver) {
+
+			this->IsHoverd = true;
+			Refresh(hWnd);
 		}
 		return 0;
 	}
-	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc,  std::shared_ptr<VinaButton> vuic)
+	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaButton> vuic)
 	{
 		this->hWnd = hWnd;
 		CreateCtl(hWnd, hdc);
@@ -211,7 +212,7 @@ public:
 
 	std::wstring txt;
 	std::wstring c;
-	std::wstring _event=L"";
+	std::wstring _event = L"";
 	unsigned long Clr;
 
 	int id = -1;
@@ -227,7 +228,7 @@ protected:
 };
 class VinaText : public VertexUIControl {
 public:
-	void Set(int x, int y, int cx, int cy, const wchar_t* txt,int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE , std::function<void()>events = [] {})
+	void Set(int x, int y, int cx, int cy, const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
 	{
 		this->func = events;
 		this->txtsz = TxtSize;
@@ -268,9 +269,9 @@ public:
 			int nR, nG, nB;
 			int fact = 1;
 			if (VuiColorAverage(Clr) > 128)fact = -2;
-			nR = GetMaxValue(GetRValue(Clr) + num * 20*fact, 255);
-			nG = GetMaxValue(GetGValue(Clr) + num * 20*fact, 255);
-			nB = GetMaxValue(GetBValue(Clr) + num * 20*fact, 255);
+			nR = GetMaxValue(GetRValue(Clr) + num * 20 * fact, 255);
+			nG = GetMaxValue(GetGValue(Clr) + num * 20 * fact, 255);
+			nB = GetMaxValue(GetBValue(Clr) + num * 20 * fact, 255);
 			nClr = RGB(nR, nG, nB);
 			D2DDrawText(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Segoe UI", 1);
 		}
@@ -299,7 +300,7 @@ public:
 				int nR, nG, nB;
 				int fact = 1;
 				if (VuiColorAverage(Clr) > 128)fact = -2;
-				nR = GetMaxValue(GetRValue(Clr) + num * 20*fact, 255);
+				nR = GetMaxValue(GetRValue(Clr) + num * 20 * fact, 255);
 				nG = GetMaxValue(GetGValue(Clr) + num * 20 * fact, 255);
 				nB = GetMaxValue(GetBValue(Clr) + num * 20 * fact, 255);
 				nClr = RGB(nR, nG, nB);
@@ -307,32 +308,35 @@ public:
 			D2DDrawText(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Segoe UI", 1);
 		}
 	}
-	virtual int AddEvent()
+	virtual int OnMouseUp()
 	{
-		if (GetPtInfo(hWnd, x, y, cx, cy))
-		{
-			if (ClickMsg == 1)
-			{
-				ClickMsg = 0;
+		this->func();
+		//if(func)vinaFuncMap[_event.c_str()]();
+		return 0;
+	}
+	virtual int OnMouseDown()
+	{
 
-			}
-			if (KeepDownMsg == 1)
-			{
 
-			}
-			if (RClickMsg == 1)
-			{
-				RClickMsg = 0;
 
-			}
-			if (hState == 0)
-			{
-				Refresh(hWnd);
-				hState = 1;
-			}
-			return 0;
+		return 0;
+	}
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
+	{
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+
+		if (eventtype == vinaEvent::mouseOver) {
+
+			this->IsHoverd = true;
+			Refresh(hWnd);
 		}
-		return -1;
+		return 0;
+	}
+	virtual VertexUIPos GetCurrentRect() {
+		VertexUIPos _{ x,y,cx,cy };
+		return _;
 	}
 	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaText> vuic)
 	{
@@ -361,7 +365,7 @@ public:
 	{
 		if (from == std::wstring(L"test-right"))return std::wstring(L"\uf178");
 	}
-	void Set(int x, int y,  const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
+	void Set(int x, int y, const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
 	{
 		this->func = events;
 		this->txtsz = TxtSize;
@@ -407,7 +411,7 @@ public:
 			nB = GetMaxValue(GetBValue(Clr) + num * 20 * fact, 255);
 			nClr = RGB(nR, nG, nB);
 			std::wstring newStr = this->CvtFont(txt.c_str());
-			D2DDrawText(hdc,newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 		}
 		else
 		{
@@ -491,9 +495,9 @@ protected:
 	std::function<void()>func;
 	std::wstring text;
 };
-class VinaSwitch: public VertexUIControl {
+class VinaSwitch : public VertexUIControl {
 public:
-	void Set(int x, int y, int cx, int cy, VertexUICtlColor ci , std::function<void()>events = [] {} )
+	void Set(int x, int y, int cx, int cy, VertexUICtlColor ci, std::function<void()>events = [] {})
 	{
 		this->func = events;
 		this->Clr = ci.color;
@@ -515,7 +519,7 @@ public:
 		if (GetPtInfo(hWnd, x, y, cx, cy))
 		{
 
-			if (flag == 0 )
+			if (flag == 0)
 			{
 				GlobalAnimationCount++;
 				flag = 1;
@@ -531,7 +535,7 @@ public:
 				GlobalAnimationCount--;
 
 			}
-			
+
 
 			float num;
 			num = CalcEaseOutCurve(ap, 0, 0.5, 10);
@@ -542,7 +546,7 @@ public:
 				Shadow.SetSize(5 + num * 10);
 				Shadow.SetDarkness(100 - (10 - ap) * 5);
 				Shadow.SetPosition(0, 0);
-				Shadow.Create(hdc, this->x, this->y, this->cx, this->cy, cy/2	);
+				Shadow.Create(hdc, this->x, this->y, this->cx, this->cy, cy / 2);
 				});
 			unsigned long nClr;
 			int nR, nG, nB;
@@ -603,8 +607,8 @@ public:
 				nB = GetMaxValue(GetBValue(Clr) + num * 20, 255);
 				nClr = RGB(nR, nG, nB);
 			}
-			int dist = cy*0.15;
-			int innerBlockSize = cy - dist*2;
+			int dist = cy * 0.15;
+			int innerBlockSize = cy - dist * 2;
 			if (value == false)
 			{
 				D2DDrawRoundRect(hdc, x, y, cx, cy, nClr, cy / 2, 1, 1.0f, borderClr);
@@ -612,7 +616,7 @@ public:
 			}
 			else {
 				D2DDrawRoundRect(hdc, x, y, cx, cy, aClr, cy / 2, 1, 1.0f, aBorderClr);
-				D2DDrawRoundRect(hdc, x+cx-innerBlockSize-dist, y + dist, innerBlockSize, innerBlockSize, aInnerClr, cy / 2, 1, 1.0f, aBorderClr);
+				D2DDrawRoundRect(hdc, x + cx - innerBlockSize - dist, y + dist, innerBlockSize, innerBlockSize, aInnerClr, cy / 2, 1, 1.0f, aBorderClr);
 			}
 		}
 	}
@@ -677,6 +681,84 @@ protected:
 	unsigned long aBorderClr;
 	unsigned long aClr;
 	std::function<void()>func;
-	bool value=false;
+	bool value = false;
 	bool preValue;
+};
+
+class VinaCaptionBar : public VertexUIControl {
+public:
+	void Set(int x, int y, int cx, int cy, const wchar_t* txt, unsigned long clr = VERTEXUICOLOR_MIDNIGHT, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
+	{
+		this->func = events;
+		this->Clr = clr;
+		this->txtsz = TxtSize;
+		this->txtClr = TxtColor;
+		this->txt = txt;
+		this->x = x;
+		this->y = y;
+		this->cx = cx;
+		this->cy = cy;
+	}
+
+	virtual void CreateCtl(HWND hWnd, HRT hdc)
+	{
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		D2DDrawSolidRect(hdc, x, y, cx, cy, Clr, 1);
+		D2DDrawText2(hdc, txt.c_str(), x + 20, y + 10, cx, cy, txtsz, txtClr, L"Segoe UI", 1, false);
+	}
+
+	virtual int OnMouseUp()
+	{
+		Refresh(hWnd);
+		//if(func)vinaFuncMap[_event.c_str()]();
+		return 0;
+	}
+	virtual int OnMouseDown()
+	{
+		SendMessage(hWnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+		Refresh(hWnd);
+		func();
+		return 0;
+	}
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
+	{
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+
+		if (eventtype == vinaEvent::mouseOver) {
+
+		}
+		return 0;
+	}
+	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaCaptionBar> vuic)
+	{
+		this->hWnd = hWnd;
+		CreateCtl(hWnd, hdc);
+	}
+	virtual VertexUIPos GetCurrentRect() {
+		VertexUIPos _{ x,y,cx,cy };
+		return _;
+	}
+	void SetInternalEvent(std::wstring ev)
+	{
+		this->_event = ev;
+	}
+
+	std::wstring txt;
+	std::wstring c;
+	std::wstring _event = L"";
+	unsigned long Clr;
+
+	int id = -1;
+protected:
+
+	HWND hWnd;
+	int ap = 0;
+	int flag = 0;
+	float txtsz = 15;
+	unsigned long txtClr;
+	std::function<void()>func;
+	std::wstring text;
 };
