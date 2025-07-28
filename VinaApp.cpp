@@ -1,6 +1,10 @@
 ﻿// VinaApp.cpp : 定义应用程序的入口点。
 //
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
+#include <json/json.h>
+
 #include "framework.h"
 #include "VinaApp.h"
 #include "VertexUI/VertexUI.ClickArea.h"
