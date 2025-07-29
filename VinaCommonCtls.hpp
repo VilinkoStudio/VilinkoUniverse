@@ -78,7 +78,7 @@ public:
 			nClr = RGB(nR, nG, nB);
 			D2DDrawRoundRect(hdc, x + num, y + num, cx - num * 2, cy - num * 2, nClr, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
 
-			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz - num, txtClr, L"Segoe UI", 1, true);
+			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-num, txtClr, L"Segoe UI", 1, true);
 		}
 		else if (this->IsHoverd == true)
 		{
@@ -164,7 +164,7 @@ public:
 				nClr = RGB(nR, nG, nB);
 			}
 			D2DDrawRoundRect(hdc, x - num, y - num, cx + num * 2, cy + num * 2, nClr, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
-			D2DDrawText2(hdc, txt.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, txtClr, L"Segoe UI", 1, true);
+			D2DDrawText2(hdc, txt.c_str(), x,(float)(y+cy/2-txtsz/1.5), cx, cy, txtsz, txtClr,L"Segoe UI",1,true);
 		}
 	}
 
@@ -316,9 +316,9 @@ public:
 	}
 	virtual int OnMouseDown()
 	{
-
-
-
+		
+	
+		
 		return 0;
 	}
 	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
@@ -705,7 +705,7 @@ public:
 		RECT rc;
 		GetClientRect(hWnd, &rc);
 		D2DDrawSolidRect(hdc, x, y, cx, cy, Clr, 1);
-		D2DDrawText2(hdc, txt.c_str(), x + 20, y + 10, cx, cy, txtsz, txtClr, L"Segoe UI", 1, false);
+		D2DDrawText2(hdc, txt.c_str(), x+20, y+10, cx, cy, txtsz, txtClr, L"Segoe UI", 1, false);
 	}
 
 	virtual int OnMouseUp()
@@ -791,18 +791,23 @@ public:
 		RECT rc;
 		GetClientRect(hWnd, &rc);
 		ScrollDepth += this->GetParent()->GetInstantScrollDepth();
+
+
+		int TextArea = (GetTxtLine2(this->txt.c_str())* txtsz*gScale);
+		MonitorValue(TextArea);
+		ScrollDepth = GetMaxValue(GetMinValue(ScrollDepth, 1),TextArea-cy);
 		MonitorValue(ScrollDepth);
-		ScrollDepth = GetMinValue(ScrollDepth, 144);
-		int TextArea = (GetTxtLine2(this->txt.c_str()) * txtsz * gScale * 1.5);
 		float SlideRate = static_cast<float>(TextArea) / cy;
 		float BlankRate = static_cast<float>(TextArea) / GetMinValue(ScrollDepth, 1);
-		float dist = (rc.bottom / BlankRate);
-		float height = (rc.bottom / SlideRate);
+		float dist = (cy / BlankRate);
+		float height = (cy / SlideRate);
 
-		D2DDrawRoundRect(hdc, x, y, cx, cy, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+		D2DDrawRoundRect(hdc, x,y,cx,cy, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
 		D2DDrawInClippedRoundRect(hWnd, hdc, x, y, cx, cy, 12,
-			[this](HWND hWnd, HRT hdc2, int x, int y, int cx, int cy)->void {
-				D2DDrawText(hdc2, this->txt.c_str(), x + 20, y + 20, cx + 140, cy - 40 - ScrollDepth, this->txtsz, VERTEXUICOLOR_WHITE); }
+			[this,dist,height](HWND hWnd, HRT hdc2, int x, int y, int cx, int cy)->void {
+				D2DDrawText(hdc2, this->txt.c_str(), x + 20, y + 20 - GetMinValue(ScrollDepth,1), cx + 240, cy + 240, this->txtsz, VERTEXUICOLOR_WHITE);
+				D2DDrawRoundRect(hdc2, x + cx - 6, y+dist, 5, height, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 40), 4, 1, 0, VERTEXUICOLOR_MIDNIGHTPLUS);
+			}
 		);
 
 	}
@@ -817,7 +822,7 @@ public:
 	}
 	virtual int OnMouseDown()
 	{
-		//	ap = 0;
+	    //	ap = 0;
 		this->IsPushed = true;
 		Refresh(hWnd);
 		return 0;

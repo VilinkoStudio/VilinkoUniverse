@@ -506,7 +506,7 @@ namespace VertexUI
 			ID2D1HwndRenderTarget* pRT = NULL;
 
 			// Create a Direct2D render target          
-			if (pRT == NULL && pRts[hWnd] == nullptr)
+			if (pRT == NULL && pRts[hWnd]==nullptr)
 			{
 				D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties();
 				rtProps.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
