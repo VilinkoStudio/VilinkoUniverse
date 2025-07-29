@@ -364,6 +364,10 @@ public:
 	std::wstring CvtFont(std::wstring from)
 	{
 		if (from == std::wstring(L"test-right"))return std::wstring(L"\uf178");
+		if (from == std::wstring(L"win-close"))return std::wstring(L"\uf00d");
+		if (from == std::wstring(L"win-max"))return std::wstring(L"\uf065");
+		if (from == std::wstring(L"win-min"))return std::wstring(L"\uf068");
+		if (from == std::wstring(L"win-restore"))return std::wstring(L"\uf066");
 	}
 	void Set(int x, int y,  const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
 	{
@@ -411,7 +415,7 @@ public:
 			nB = GetMaxValue(GetBValue(Clr) + num * 20 * fact, 255);
 			nClr = RGB(nR, nG, nB);
 			std::wstring newStr = this->CvtFont(txt.c_str());
-			D2DDrawText(hdc,newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 		}
 		else
 		{
@@ -447,32 +451,35 @@ public:
 			D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 		}
 	}
-	virtual int AddEvent()
+	virtual int OnMouseUp()
 	{
-		if (GetPtInfo(hWnd, x, y, cx, cy))
-		{
-			if (ClickMsg == 1)
-			{
-				ClickMsg = 0;
+		this->func();
+		//if(func)vinaFuncMap[_event.c_str()]();
+		return 0;
+	}
+	virtual int OnMouseDown()
+	{
 
-			}
-			if (KeepDownMsg == 1)
-			{
 
-			}
-			if (RClickMsg == 1)
-			{
-				RClickMsg = 0;
 
-			}
-			if (hState == 0)
-			{
-				Refresh(hWnd);
-				hState = 1;
-			}
-			return 0;
+		return 0;
+	}
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
+	{
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+
+		if (eventtype == vinaEvent::mouseOver) {
+
+			this->IsHoverd = true;
+			Refresh(hWnd);
 		}
-		return -1;
+		return 0;
+	}
+	virtual VertexUIPos GetCurrentRect() {
+		VertexUIPos _{ x,y,cx,cy };
+		return _;
 	}
 	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaFAIcon> vuic)
 	{
@@ -794,9 +801,9 @@ public:
 
 
 		int TextArea = (GetTxtLine2(this->txt.c_str())* txtsz*gScale);
-		MonitorValue(TextArea);
+	//	MonitorValue(TextArea);
 		ScrollDepth = GetMaxValue(GetMinValue(ScrollDepth, 1),TextArea-cy);
-		MonitorValue(ScrollDepth);
+	//	MonitorValue(ScrollDepth);
 		float SlideRate = static_cast<float>(TextArea) / cy;
 		float BlankRate = static_cast<float>(TextArea) / GetMinValue(ScrollDepth, 1);
 		float dist = (cy / BlankRate);
