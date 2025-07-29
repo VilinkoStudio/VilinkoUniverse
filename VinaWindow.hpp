@@ -182,6 +182,19 @@ public:
 				SendRClickEvent(hWnd, wParam, lParam);
 				break;
 			}
+			case WM_MOUSEWHEEL:
+			{
+				
+				RECT rc;
+				GetClientRect(hWnd, &rc);
+				short stat = HIWORD(wParam);
+
+				this->NewUIPanel->SetInstantScrollDepth(-(stat * 0.15));
+				// stat * 0.15;
+
+				SendMessage(hWnd, WM_MOUSEMOVE, wParam, lParam);
+				Refresh(hWnd);
+			}
 			case WM_ACTIVATE:
 			{
 				if (this->TempFloat == true)
