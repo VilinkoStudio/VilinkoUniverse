@@ -465,6 +465,40 @@ namespace VertexUI
 			SafeRelease(&pTextFormat);
 			SafeRelease(&testBrush);
 		}
+		template<class T>
+		void D2DDrawText3(T pRenderTarget, const wchar_t* Text, float x, float y, float cx, float cy, float Size = 18, unsigned long ClrFill = VERTEXUICOLOR_WHITE, const wchar_t* font = L"Segoe UI", float alpha = 1, bool center = false)
+		{
+			IDWriteTextFormat* pTextFormat = NULL;
+			ID2D1SolidColorBrush* testBrush = NULL;
+			pRenderTarget->CreateSolidColorBrush(
+				D2D1::ColorF(D2D1::ColorF(RGBToHex(ClrFill), alpha)),
+				&testBrush
+			);
+			//create text format
+			pDWriteFactory->CreateTextFormat(
+				font,
+				NULL,
+				DWRITE_FONT_WEIGHT_SEMI_BOLD,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				Size,
+				L"",
+				&pTextFormat
+			);
+			if (center == true)pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+			D2D1_RECT_F layoutRect = D2D1::RectF(x, y, x + cx, y + cy);
+
+			//draw text
+			pRenderTarget->DrawText(
+				Text,
+				wcslen(Text),
+				pTextFormat,
+				layoutRect,
+				testBrush
+			);
+			SafeRelease(&pTextFormat);
+			SafeRelease(&testBrush);
+		}
 		void CompD2DDrawRoundRect(HWND hWnd, HDC hdc, int x, int y, int cx, int cy, unsigned long ClrFill, int radius, float alpha = 1, int border = 0, unsigned long borderColor = 0, float borderAlphaSpecial = 0, bool OnlyBorder = false)
 		{
 			// Create a DC render target.
@@ -1583,6 +1617,51 @@ namespace VertexUI::Panel
 		if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
 		return c / 2 * ((t -= 2) * t * t + 2) + b;
 
+	}
+	double CalcBezierCurve(double t, double b, double c, double d,
+		double p1x, double p1y, double p2x, double p2y) {
+
+		if (d <= 0) return c;
+		if (t <= 0) return b;
+		if (t >= d) return c;
+
+
+		double normalizedT = t / d;
+
+		double uMin = 0.0;
+		double uMax = 1.0;
+		double u = 0.5;
+		const int iterations = 20;
+
+		for (int i = 0; i < iterations; ++i) {
+			u = (uMin + uMax) / 2.0;
+
+			double oneMinusU = 1.0 - u;
+			double uSq = u * u;
+			double oneMinusUSq = oneMinusU * oneMinusU;
+
+			double x = 3.0 * oneMinusUSq * u * p1x +
+				3.0 * oneMinusU * uSq * p2x +
+				uSq * u;
+
+			if (x < normalizedT) {
+				uMin = u;
+			}
+			else {
+				uMax = u;
+			}
+		}
+
+
+		double oneMinusU = 1.0 - u;
+		double uSq = u * u;
+		double oneMinusUSq = oneMinusU * oneMinusU;
+
+		double y = 3.0 * oneMinusUSq * u * p1y +
+			3.0 * oneMinusU * uSq * p2y +
+			uSq * u;
+
+		return b + y * (c - b);
 	}
 	double CalcBounceCurve(double t, double b, double c, double d)
 	{

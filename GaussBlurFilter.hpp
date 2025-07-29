@@ -474,7 +474,7 @@ DWORD WINAPI GaussBlurThreadProc24(LPVOID lpParameters)
 				pSrcPixel = pInfo->pSrc + pInfo->stride * subRow + pInfo->pixelSize * subCol;
 
 				result[0] += pSrcPixel[0] * pInfo->pTempl[x1];
-				(pSrcPixel[1]<255) ? result[1] += (pSrcPixel[1] + 1) * pInfo->pTempl[x1] : result[1] += pSrcPixel[1] * pInfo->pTempl[x1];
+				(pSrcPixel[1]<255) ? result[1] += (pSrcPixel[1]) * pInfo->pTempl[x1] : result[1] += pSrcPixel[1] * pInfo->pTempl[x1];
 				result[2] += pSrcPixel[2] * pInfo->pTempl[x1];
 			}
 			pDestPixel[0] = (BYTE)result[0];
