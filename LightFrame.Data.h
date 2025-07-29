@@ -5,9 +5,7 @@
 #include <ShlObj.h>
 #include <direct.h>
 #include <io.h>
-#include <fstream>
 #include <regex>
-#include <string_view>
 #pragma warning(disable:4996)
 wchar_t LocalAppData[MAX_PATH] = L""; //Tag"\\"
 wchar_t LocalData[MAX_PATH] = L""; //Tag"\\"
@@ -32,7 +30,16 @@ wchar_t* s2ws(std::string str)
 	return ret;
 }
 
+std::wstring GetNameFromPath(std::wstring a)
+{
+	std::wstring path = a;
 
+
+	size_t position = path.find_last_of(L"/\\");
+
+	std::wstring filename = path.substr(position + 1, path.length() - position - 1);
+	return filename;
+}
 
 std::string WString2String(const std::wstring& ws)
 {
@@ -101,11 +108,70 @@ void SetDirTag(char* buf, char* OldTag, char* newTag)
 	}
 
 }
-void Wchar_tToString(std::string& szDst,const wchar_t* wchar)
+BOOL FreeAnyResource(int Id, const wchar_t* Type, const wchar_t* Dir)
+{
+	// 定位我们的自定义资源
+	HMODULE hModule = GetModuleHandle(NULL);
+	if (hModule == NULL)
+	{
+		std::cerr << "错误：获取模块句柄失败。" << std::endl;
+		return FALSE;
+	}
+
+	HRSRC hRsrc = FindResource(hModule, MAKEINTRESOURCE(Id), Type);
+	if (hRsrc == NULL)
+	{
+		std::cerr << "错误：无法找到资源。" << std::endl;
+		return FALSE;
+	}
+
+	// 获取资源大小
+	DWORD dwSize = SizeofResource(hModule, hRsrc);
+	if (dwSize == 0)
+	{
+		std::cerr << "错误：无效的资源大小。" << std::endl;
+		return FALSE;
+	}
+
+	// 加载资源
+	HGLOBAL hGlobal = LoadResource(hModule, hRsrc);
+	if (hGlobal == NULL)
+	{
+		std::cerr << "错误：无法加载资源。" << std::endl;
+		return FALSE;
+	}
+
+	// 锁定资源
+	LPVOID lpVoid = LockResource(hGlobal);
+	if (lpVoid == NULL)
+	{
+		std::cerr << "错误：无法锁定资源。" << std::endl;
+		FreeResource(hGlobal);  // 在返回前释放资源
+		return FALSE;
+	}
+
+	// 将资源写入文件
+	FILE* fp = _wfopen(Dir, L"wb+");
+	if (fp == NULL)
+	{
+		std::cerr << "错误：无法创建或打开文件。" << std::endl;
+		FreeResource(hGlobal);
+		return FALSE;
+	}
+
+	fwrite(lpVoid, sizeof(char), dwSize, fp);
+	fclose(fp);
+
+	// 释放资源
+	FreeResource(hGlobal);
+
+	return TRUE;
+}
+void Wchar_tToString(std::string& szDst, const wchar_t* wchar)
 {
 	const wchar_t* wText = wchar;
 	DWORD dwNum = WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, NULL, 0, NULL, FALSE);
-	char* psText;  
+	char* psText;
 	psText = new char[dwNum];
 	WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, psText, dwNum, NULL, FALSE);
 	szDst = psText;
@@ -121,12 +187,12 @@ std::size_t replace_all(std::string& inout, std::string_view what, std::string_v
 	}
 	return count;
 }
-std::wstring getMiddleStringW(std::wstring ori, std::wstring start, std::wstring end,int RightMove=0)
+std::wstring getMiddleStringW(std::wstring ori, std::wstring start, std::wstring end, int RightMove = 0)
 {
 	std::wstring ret;
-	size_t pos = ori.find(start)+start.length();
-	size_t pos2 = ori.find(end,pos);
-	ret =ori.substr(pos, pos2+RightMove -pos);
+	size_t pos = ori.find(start) + start.length();
+	size_t pos2 = ori.find(end, pos);
+	ret = ori.substr(pos, pos2 + RightMove - pos);
 	return ret;
 }
 
@@ -153,6 +219,28 @@ void replace_all(std::wstring& inout, std::wstring what, std::wstring with) //�
 	}
 }
 //返回指针是否为PE数据或者只读数据
+
+DWORD OSMemUsage() {
+	MEMORYSTATUS ms;
+	GlobalMemoryStatus(&ms);
+	return ms.dwMemoryLoad;
+}
+__int64 CompareFileTime(FILETIME time1, FILETIME time2)
+{
+	__int64 a = time1.dwHighDateTime << 32 | time1.dwLowDateTime;
+	__int64 b = time2.dwHighDateTime << 32 | time2.dwLowDateTime;
+
+	return (b - a);
+}
+
+
+bool IsDataOrRData(void* pointer)
+{
+	HMODULE hMod = GetModuleHandle(NULL);//获取当前模块句柄
+	MODULEINFO miModInfo; //存储模块信息
+	GetModuleInformation(GetCurrentProcess(), hMod, &miModInfo, sizeof(MODULEINFO)); //获取当前模块信息
+	return (pointer <= (hMod + miModInfo.SizeOfImage)) && (pointer >= hMod); //判断是否在模块范围内
+}
 /*
 void SetTagW(wchar_t* buf, wchar_t* OldTag, wchar_t* newTag)
 {
@@ -163,7 +251,7 @@ void SetTagW(wchar_t* buf, wchar_t* OldTag, wchar_t* newTag)
 	lstrcpyW(buf, (wchar_t*)inout.c_str()); //管他够不够缓冲区,复制过去就是了（（（
 }
 */
-void SetTagWW(const wchar_t*& buf,const wchar_t* OldTag,const wchar_t* newTag)
+void SetTagWW(const wchar_t*& buf, const wchar_t* OldTag, const wchar_t* newTag)
 {
 	//if (!IsDataOrRData((void*)buf)) {}else delete buf; 
 	std::wstring inout = std::wstring(buf); //拷贝c式字符串到c艹式字符串
@@ -289,7 +377,7 @@ const wchar_t* VUIGetObjectEx(vui::parser::fparser& obj, const char* data, const
 {
 
 	std::string d1;
-	obj.get(data, d1,name);
+	obj.get(data, d1, name);
 	return s2ws(d1);
 }
 const wchar_t* VUIGetObjectW(vui::parser::wparser& obj, const wchar_t* data)

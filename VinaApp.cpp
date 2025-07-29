@@ -11,6 +11,7 @@
 #include "VertexUI/VertexUI.Panel.h"
 #include "VertexUI/VertexUI.min.h"
 #include "MainUI.hpp"
+#include "LightFrame.Data.h"
 #include "VinaWindow.hpp"
 VertexUIInit;
 #define MAX_LOADSTRING 100
@@ -19,6 +20,48 @@ static bool IsCfg = false;
 
 // 全局变量:
 HINSTANCE hInst;                                // 当前实例
+HANDLE hMyFont;
+HGLOBAL hFntMem;
+
+
+
+
+void SetDataBase()
+{
+    wchar_t test[260] = L"";
+    GetAppdataPath(LocalData);
+    GetAppdataPath(LocalAppData);
+    GetAppdataPath(test);
+    GetAppdataPathA(LocalDataA);
+
+
+    wcscat(LocalData, L"\\Vilinko\\VisUniverse");
+    strcat(LocalDataA, "\\Vilinko\\VisUniverse");
+
+    wcscpy(LocalData2, LocalData);
+    wcscpy(LocalRes, LocalData);
+    wcscpy(LocalCache, LocalData);
+    strcpy(LocalCacheA, LocalDataA);
+
+    wcscpy(LocalCom, LocalData);
+    wcscpy(LocalCards, LocalData);
+    strcpy(LocalComA, LocalDataA);
+    wcscat(LocalCom, L"\\Vilinko\\VisUniverse\\Components");
+    wcscat(LocalCards, L"\\Vilinko\\VisUniverse\\Cards");
+    strcat(LocalComA, "\\Vilinko\\VisUniverse\\Components");
+
+    wcscat(LocalCache, L"\\Vilinko\\VisUniverse\\VisUniverse.vui");
+    strcat(LocalCacheA, "\\Vilinko\\VisUniverse\\VisUniverse.vui");
+    wcscat(LocalRes, L"\\Vilinko\\VisUniverse\\reslib");
+
+    SetTagW(LocalData2, L"\\", L"/");
+    SetTagW(LocalCache2, L"\\", L"/");
+    if (_waccess(LocalData, 0) == -1)
+    {
+        mkdirs(LocalData2);
+    }
+
+}
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -28,7 +71,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
+    
+    SetDataBase();
+    hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
+    HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
+    if (hFntRes) { // If we have found the resource ... 
+        hFntMem = LoadResource(hInstance, hFntRes); // Load it
+        if (hFntMem != nullptr) {
+            void* FntData = LockResource(hFntMem); // Lock it into accessible memory
+            DWORD nFonts = 0, len = SizeofResource(hInstance, hFntRes);
+            hMyFont = AddFontMemResourceEx(FntData, len, nullptr, &nFonts); // Fake install font!
+        }
+    }
+    std::wstring fntBase = std::wstring(LocalData) + std::wstring(L"\\Font-AwesomeFree.ttf");
+    FreeAnyResource(IDF_FONTAWESOME, L"BINARY", fntBase.c_str());
+    AddFontResource(fntBase.c_str());
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_VINAAPP));
     InitGlobalD2D();
@@ -56,9 +113,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         static double AnimateMove = 0;
         test2->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"更新", [hWnd] {IsCfg = true; 	
         AnimateMove = 0;
-        for (int i = 0; i < 100; i += 4)
+        for (int i = 0; i < 30; i += 1)
         {
-            AnimateMove = CalcBezierCurve(i, 0, 50 * gScale, 100, .17, .67, .57, 1.29);
+            AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
             XSleep(5);
             Refresh(hWnd);
         }
@@ -72,14 +129,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         {
 
             CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                AreaBlur(hrt, { 0,int(40*gScale),int(rc.right),int(rc.bottom-40*gScale)}, 3, 5, 0);
+                AreaBlur(hrt, { 0,int(40*gScale+100*gScale- AnimateMove*gScale),int(rc.right),int(rc.bottom-40*gScale)}, 3, 5, 0);
                 });
             static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
             layer->Set(0, 40, rc.right / gScale, rc.bottom / gScale);
             MainWindow->GetPanel()->Add(layer);
 
             static std::shared_ptr<VinaFAIcon>bk = std::make_shared<VinaFAIcon>();
-            bk->Set(20, 60 + 100- AnimateMove, L"test-left", 22, VERTEXUICOLOR_WHITE, [hWnd] {IsCfg = false; Refresh(hWnd); });
+            bk->Set(20, 60 + 100- AnimateMove, L"test-left", 22, VERTEXUICOLOR_WHITE, [hWnd] {AnimateMove = 0;
+            for (int i = 0; i < 30; i += 1)
+            {
+                AnimateMove = -CalcBezierCurve(i, -100, 100, 30, .26, -0.25, .76, .2);
+                XSleep(5);
+                Refresh(hWnd);
+            } IsCfg = false; Refresh(hWnd); });
             MainWindow->GetPanel()->Add(bk);
 
             static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
