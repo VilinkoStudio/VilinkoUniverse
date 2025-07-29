@@ -361,7 +361,16 @@ namespace VertexUI {
 			}
 			return ret;
 		}
-		
+		virtual int GetInstantScrollDepth()
+		{
+			int prev = instScrollDepth;
+			instScrollDepth = 0;
+			return prev;
+		}
+		virtual void SetInstantScrollDepth(int i)
+		{
+			instScrollDepth=i;
+		}
 	protected:
 		template <class T>
 		void SetLayout(T ctl) {
@@ -408,7 +417,7 @@ namespace VertexUI {
 		}
 		HWND hWnd;
 		HDC hdc;
-
+		int instScrollDepth=0;
 		std::vector<VertexUIGroup>Group;
 		std::vector<VertexUIControl>Ctl;
 		std::vector<std::shared_ptr<VertexUIControl>>CtlPtr;

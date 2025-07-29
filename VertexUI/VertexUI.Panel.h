@@ -366,6 +366,37 @@ namespace VertexUI
 			m_pGDIRT->ReleaseDC(NULL);
 			SafeRelease(&m_pGDIRT);
 		}
+		typedef void (D2DHWNDDRAWLAYERPANEL)(HWND, ID2D1HwndRenderTarget*, int x, int y, int cx, int cy);
+		template <class T>
+		void D2DDrawInClippedRoundRect(HWND hWnd, T pRT, float x, float y, float cx, float cy, float rr, std::function<D2DHWNDDRAWLAYERPANEL> dwf)
+		{
+			HRESULT hr = S_OK;
+
+			// Create a layer.
+			ID2D1Layer* pLayer = NULL;
+			hr = pRT->CreateLayer(NULL, &pLayer);
+			D2D1_ROUNDED_RECT roundedRect = D2D1::RoundedRect(
+				D2D1::RectF(x, y, cx + x, cy + y),
+				rr, rr
+			);
+			ID2D1RoundedRectangleGeometry* pathGeo;
+			m_pD2DFactory->CreateRoundedRectangleGeometry(roundedRect, &pathGeo);
+			if (SUCCEEDED(hr))
+			{
+				pRT->PushLayer(
+					D2D1::LayerParameters(D2D1::InfiniteRect(), pathGeo, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE),
+					pLayer
+				);
+
+				dwf(hWnd, pRT, x, y, cx, cy);
+				pRT->PopLayer();
+
+			}
+			SafeRelease(&pathGeo);
+			SafeRelease(&pLayer);
+
+			return;
+		}
 		template<class T>
 		void D2DDrawText(T pRenderTarget, const wchar_t* Text, int x, int y, int cx, int cy, float Size = 18, unsigned long ClrFill = VERTEXUICOLOR_WHITE, const wchar_t* font = L"Segoe UI", float alpha = 1, DWRITE_FONT_WEIGHT wid = DWRITE_FONT_WEIGHT_NORMAL)
 		{
@@ -1466,6 +1497,7 @@ namespace VertexUI
 	};
 
 }
+
 
 namespace VertexUI::Panel
 {

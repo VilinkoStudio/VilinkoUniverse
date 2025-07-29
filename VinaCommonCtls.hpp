@@ -6,7 +6,7 @@ using namespace VertexUI::Click;
 
 typedef ID2D1DCRenderTarget* DCRT;
 typedef ID2D1HwndRenderTarget* HRT;
-typedef void (D2DHWNDDRAWLAYERPANEL)(HWND, ID2D1HwndRenderTarget*, int x, int y, int cx, int cy);
+
 struct VertexUICtlColor
 {
 	unsigned long color = VERTEXUICOLOR_MIDNIGHT;
@@ -754,6 +754,109 @@ public:
 	int id = -1;
 protected:
 
+	HWND hWnd;
+	int ap = 0;
+	int flag = 0;
+	float txtsz = 15;
+	unsigned long txtClr;
+	std::function<void()>func;
+	std::wstring text;
+};
+
+class VinaMultiTextBox : public VertexUIControl {
+public:
+	void Set(int x, int y, int cx, int cy, const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, unsigned long clr = VERTEXUICOLOR_MIDNIGHT)
+	{
+		//this->func = events;
+		this->Clr = clr;
+		this->txtsz = TxtSize;
+		this->txtClr = TxtColor;
+		this->txt = txt;
+		this->x = x;
+		this->y = y;
+		this->cx = cx;
+		this->cy = cy;
+	}
+
+	int GetTxtLine2(const wchar_t* str) {
+		int n = 0;
+		if (NULL == str) return 0;
+		if (str[0] == 0) return 0;
+		while (*str) { if (*str == L'\n') n++; str++; }
+		if (str[-1] != L'\n') n++;//最后一行末尾没有'\n'也算一行
+		return n;
+	}
+	virtual void CreateCtl(HWND hWnd, HRT hdc)
+	{
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		ScrollDepth += this->GetParent()->GetInstantScrollDepth();
+		MonitorValue(ScrollDepth);
+		ScrollDepth = GetMinValue(ScrollDepth, 144);
+		int TextArea = (GetTxtLine2(this->txt.c_str()) * txtsz * gScale * 1.5);
+		float SlideRate = static_cast<float>(TextArea) / cy;
+		float BlankRate = static_cast<float>(TextArea) / GetMinValue(ScrollDepth, 1);
+		float dist = (rc.bottom / BlankRate);
+		float height = (rc.bottom / SlideRate);
+
+		D2DDrawRoundRect(hdc, x, y, cx, cy, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+		D2DDrawInClippedRoundRect(hWnd, hdc, x, y, cx, cy, 12,
+			[this](HWND hWnd, HRT hdc2, int x, int y, int cx, int cy)->void {
+				D2DDrawText(hdc2, this->txt.c_str(), x + 20, y + 20, cx + 140, cy - 40 - ScrollDepth, this->txtsz, VERTEXUICOLOR_WHITE); }
+		);
+
+	}
+
+	virtual int OnMouseUp()
+	{
+		//ap = 0;
+		Refresh(hWnd);
+		//func();
+		//if(func)vinaFuncMap[_event.c_str()]();
+		return 0;
+	}
+	virtual int OnMouseDown()
+	{
+		//	ap = 0;
+		this->IsPushed = true;
+		Refresh(hWnd);
+		return 0;
+	}
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
+	{
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+
+		if (eventtype == vinaEvent::mouseOver) {
+
+			this->IsHoverd = true;
+			Refresh(hWnd);
+		}
+		return 0;
+	}
+	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr< VinaMultiTextBox> vuic)
+	{
+		this->hWnd = hWnd;
+		CreateCtl(hWnd, hdc);
+	}
+	virtual VertexUIPos GetCurrentRect() {
+		VertexUIPos _{ x,y,cx,cy };
+		return _;
+	}
+	void SetInternalEvent(std::wstring ev)
+	{
+		this->_event = ev;
+	}
+
+	std::wstring txt;
+	std::wstring c;
+	std::wstring _event = L"";
+	unsigned long Clr;
+
+	int id = -1;
+protected:
+	int ScrollDepth = 0;
 	HWND hWnd;
 	int ap = 0;
 	int flag = 0;

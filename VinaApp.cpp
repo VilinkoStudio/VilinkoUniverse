@@ -62,8 +62,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         if (ExtraMsg == 1)
         {
-            D2DDrawRoundRect(hrt, 20, 120, rc.right / gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+            static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
+            test2->SetParent(MainWindow->GetPanel());
+            test2->Set(20, 120, rc.right / gScale - 40, 200, L"11111111111111111111111111111\n22222222222222222222222222\n333333333333333333333333333\n4444444444444444\n55555555\n\n\nQwQ", 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
+            MainWindow->GetPanel()->Add(test2);
+            /*
+            D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
             D2DDrawText(hrt, L"Hello World\n12345678", 30, 140, rc.right / gScale - 70, 200, 18, VERTEXUICOLOR_WHITE);
+            */
         }
         });
     MainWindow->SetOutFrame(VinaWindow::Client);
@@ -71,4 +77,5 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     return 0;
 }
+
 
