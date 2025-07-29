@@ -242,6 +242,7 @@
     <ClInclude Include="include\crypto\x509_acert.h" />
     <ClInclude Include="include\crypto\__DECC_INCLUDE_EPILOGUE.H" />
     <ClInclude Include="include\crypto\__DECC_INCLUDE_PROLOGUE.H" />
+    <ClInclude Include="include\httplib.h" />
     <ClInclude Include="include\internal\asn1.h" />
     <ClInclude Include="include\internal\bio.h" />
     <ClInclude Include="include\internal\bio_addr.h" />
@@ -576,6 +577,10 @@
     <None Include="include\openssl\x509_vfy.h.in" />
     <None Include="json\json_valueiterator.inl" />
     <None Include="VertexUI\VertexUI" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\libcrypto.lib" />
+    <Library Include="lib\libssl.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
