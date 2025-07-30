@@ -11,7 +11,6 @@
 #include "VertexUI/VertexUI.Panel.h"
 #include "VertexUI/VertexUI.min.h"
 #include "MainUI.hpp"
-#include "LightFrame.Data.h"
 #include "VinaWindow.hpp"
 VertexUIInit;
 #define MAX_LOADSTRING 100
@@ -22,46 +21,6 @@ static bool IsCfg = false;
 HINSTANCE hInst;                                // 当前实例
 HANDLE hMyFont;
 HGLOBAL hFntMem;
-
-
-
-
-void SetDataBase()
-{
-    wchar_t test[260] = L"";
-    GetAppdataPath(LocalData);
-    GetAppdataPath(LocalAppData);
-    GetAppdataPath(test);
-    GetAppdataPathA(LocalDataA);
-
-
-    wcscat(LocalData, L"\\Vilinko\\VisUniverse");
-    strcat(LocalDataA, "\\Vilinko\\VisUniverse");
-
-    wcscpy(LocalData2, LocalData);
-    wcscpy(LocalRes, LocalData);
-    wcscpy(LocalCache, LocalData);
-    strcpy(LocalCacheA, LocalDataA);
-
-    wcscpy(LocalCom, LocalData);
-    wcscpy(LocalCards, LocalData);
-    strcpy(LocalComA, LocalDataA);
-    wcscat(LocalCom, L"\\Vilinko\\VisUniverse\\Components");
-    wcscat(LocalCards, L"\\Vilinko\\VisUniverse\\Cards");
-    strcat(LocalComA, "\\Vilinko\\VisUniverse\\Components");
-
-    wcscat(LocalCache, L"\\Vilinko\\VisUniverse\\VisUniverse.vui");
-    strcat(LocalCacheA, "\\Vilinko\\VisUniverse\\VisUniverse.vui");
-    wcscat(LocalRes, L"\\Vilinko\\VisUniverse\\reslib");
-
-    SetTagW(LocalData2, L"\\", L"/");
-    SetTagW(LocalCache2, L"\\", L"/");
-    if (_waccess(LocalData, 0) == -1)
-    {
-        mkdirs(LocalData2);
-    }
-
-}
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
