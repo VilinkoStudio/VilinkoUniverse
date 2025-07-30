@@ -510,6 +510,9 @@
     <ClInclude Include="include\openssl\__DECC_INCLUDE_EPILOGUE.H" />
     <ClInclude Include="include\openssl\__DECC_INCLUDE_PROLOGUE.H" />
     <ClInclude Include="json\json_tool.h" />
+    <ClInclude Include="LightFrame.Data.h" />
+    <ClInclude Include="LightFrame.VertexUITwinkle.hpp" />
+    <ClInclude Include="LightFrame.WindowAnimation.h" />
     <ClInclude Include="MainUI.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="VertexUI\framework.h" />

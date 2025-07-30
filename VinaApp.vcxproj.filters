@@ -37,6 +37,9 @@
     <Filter Include="库文件\openssl">
       <UniqueIdentifier>{cac24616-ae3e-41ae-bdf3-b9c86d91cfc9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\LightFrame">
+      <UniqueIdentifier>{3ccbae15-c990-4447-806a-5398ea589641}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -1172,6 +1175,15 @@
     </ClInclude>
     <ClInclude Include="include\httplib.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LightFrame.WindowAnimation.h">
+      <Filter>头文件\LightFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="LightFrame.Data.h">
+      <Filter>头文件\LightFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="LightFrame.VertexUITwinkle.hpp">
+      <Filter>头文件\LightFrame</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
