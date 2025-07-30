@@ -23,6 +23,7 @@ HANDLE hMyFont;
 HGLOBAL hFntMem;
 std::wstring LatestVersion;
 std::wstring ChangeLog;
+std::wstring InstallPath;
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -32,38 +33,50 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
 
+    bool bParseSuccess = false;
     Json::Value paramsRoot;
     Json::Reader jsonReader;
-    jsonReader.parse(ws2s(lpCmdLine), paramsRoot);
 
-    if (paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
-        if (paramsRoot["project"].asString() == "lightframe" &&
-            paramsRoot.isMember("build_date") && paramsRoot["build_date"].isString()) {
-            httplib::SSLClient httpcli("api.vertillusion.com");
-            httplib::Params params;
-            httplib::Headers headers = {
-                { "Vilinko-Project", "LightFrame" }
-            };
-            Json::Value resultRoot;
-            params.emplace("build_date", paramsRoot["build_date"].asString());
+    try {
+        if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
+            if (paramsRoot["project"].asString() == "lightframe" &&
+                paramsRoot.isMember("build_date") && paramsRoot["build_date"].isString() &&
+                paramsRoot.isMember("path") && paramsRoot["path"].isString()) {
 
-            auto httpRes = httpcli.Get("/updater/check", params, headers);
-            if (!httpRes ||
-                httpRes->status != httplib::StatusCode::OK_200 ||
-                !jsonReader.parse(httpRes->body, resultRoot) ||
-                !resultRoot.isMember("data") ||
-                !resultRoot["data"].isMember("has_update") ||
-                !resultRoot["data"]["has_update"].asBool()
-                )
-                PostQuitMessage(0);
+                bParseSuccess = true;
 
-            LatestVersion = s2ws(resultRoot["data"]["version"].asString());
-            ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+                httplib::SSLClient httpcli("api.vertillusion.com");
+                httplib::Params params;
+                httplib::Headers headers = {
+                    { "Vilinko-Project", "LightFrame" }
+                };
+                Json::Value resultRoot;
+                params.emplace("build_date", paramsRoot["build_date"].asString());
 
-            IsCfg = true;
+                auto httpRes = httpcli.Get("/updater/check", params, headers);
+                if (!httpRes ||
+                    httpRes->status != httplib::StatusCode::OK_200 ||
+                    !jsonReader.parse(httpRes->body, resultRoot) ||
+                    !resultRoot.isMember("data") ||
+                    !resultRoot["data"].isMember("has_update") ||
+                    !resultRoot["data"]["has_update"].asBool()
+                    )
+                    PostQuitMessage(0);
+
+                LatestVersion = s2ws(resultRoot["data"]["version"].asString());
+                ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+
+                IsCfg = true;
+            }
         }
     }
-    
+    catch (Json::Exception e) {
+        std::cerr << e.what() << std::endl;
+        PostQuitMessage(0);
+    }
+
+    if (!lpCmdLine && !bParseSuccess)PostQuitMessage(0);
+
     SetDataBase();
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
     HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
