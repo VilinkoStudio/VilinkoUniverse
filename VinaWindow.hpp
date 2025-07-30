@@ -195,6 +195,10 @@ public:
 				SendMessage(hWnd, WM_MOUSEMOVE, wParam, lParam);
 				Refresh(hWnd);
 			}
+			case WM_ERASEBKGND:
+			{
+				return (LPARAM)1;
+			}
 			case WM_ACTIVATE:
 			{
 				if (this->TempFloat == true)

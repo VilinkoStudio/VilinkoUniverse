@@ -1084,6 +1084,31 @@ namespace VertexUI
 			// 清理
 			d2dBitmap->Release();
 		}
+		template <typename T>
+		void D2DDrawBitmapFromByte2(T hdc, BYTE* pPixels, int x, int y, int w,int h,int sc)
+		{
+			int bp = gByteWidth;
+
+			// 创建一个 D2D 位图
+			D2D1_SIZE_U size = D2D1::SizeU(w/sc, h/sc);
+			D2D1_BITMAP_PROPERTIES bitmapProps = D2D1::BitmapProperties(
+				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+
+
+			ID2D1Bitmap* d2dBitmap = nullptr;
+			hdc->CreateBitmap(size, pPixels, bp, bitmapProps, &d2dBitmap);
+
+
+
+			// 绘制 D2D 位图
+
+			hdc->DrawBitmap(d2dBitmap, D2D1::RectF(x, y, x + w, y + h), 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, D2D1::RectF(0, 0, w/sc, h/sc));
+
+			// 结束绘制
+
+			// 清理
+			d2dBitmap->Release();
+		}
 		void CreatehIcon(HDC hdc, HICON hIcon, int x, int y, int sz)
 		{
 			if (hIcon != NULL)
@@ -2168,6 +2193,56 @@ namespace VertexUI::Panel
 		_SAFE_DELETE(nBits);
 		//delete[]pBits;
 		return hBitMap;
+	}
+	BYTE* _D2DGaussianBlurFunc(HDC hDC, int x, int y, int iWidth, int iHeight, double s = 3.5, bool IsLowQuality = false, int lqNum = 8, bool lqButhq = false, bool MultiThread = true)
+	{
+		if (IsLowQuality == false)lqNum = 1;
+		iWidth /= lqNum; iHeight /= lqNum;
+		static HBITMAP hBitMap;
+		DeleteObject(hBitMap);
+		HDC hMemDC = CreateCompatibleDC(hDC);
+		hBitMap = CreateCompatibleBitmap(hDC, iWidth, iHeight); // 创建与设备描述表兼容的位图
+		HBITMAP hPreBmp = (HBITMAP)SelectObject(hMemDC, hBitMap);
+		if (IsLowQuality == true) {
+			if (lqButhq == true)
+			{
+				::SetStretchBltMode(hMemDC, HALFTONE);
+				::SetBrushOrgEx(hMemDC, 0, 0, NULL);
+			}StretchBlt(hMemDC, 0, 0, iWidth, iHeight, hDC, x, y, iWidth * lqNum, iHeight * lqNum, SRCCOPY);
+		}
+		else BitBlt(hMemDC, 0, 0, iWidth, iHeight, hDC, x, y, SRCCOPY);
+		int size = iWidth * iHeight * 4;
+		clock_t time = clock();
+		unsigned char* pBits = (unsigned char*)malloc(size);  //在堆上申请
+
+		int nBytes = GetBitmapBits(hBitMap, size, pBits);
+
+
+		unsigned char* nBits = (unsigned char*)malloc(size);  //在堆上申请
+		CGaussBlurFilter<double> _filter;
+		_filter.SetSigma(s); // 设置高斯半径
+		if (MultiThread != false)_filter.SetMultiThreads(true, 4);
+		_filter.Filter(pBits, nBits, iWidth, iHeight, 32);
+		SetBitmapBits(hBitMap, size, nBits);
+
+
+		clock_t etime = clock();
+		int ntime = etime - time;
+		//SetBitmapBits(hBitMap, size, pBits);
+
+		wchar_t timec[20];
+		_itow(ntime, timec, 10);
+		OutputDebugString(L"Blur Time:");
+		OutputDebugString(timec);
+		OutputDebugString(L"\n");
+		//SelectObject(hdcMem, hOld);
+		SelectObject(hMemDC, hPreBmp);
+		DeleteObject(hMemDC);
+
+		//_SAFE_DELETE(pBits);
+		//_SAFE_DELETE(nBits);
+		//delete[]pBits;
+		return  pBits;
 	}
 	//防止Bmp冲突（（
 	HBITMAP _GaussianBlurFunc2(HDC hDC, int x, int y, int iWidth, int iHeight, int s = 3.5, bool IsLowQuality = false, int lqNum = 8, bool lqButhq = false, bool MultiThread = true)

@@ -125,12 +125,48 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         D2DDrawText3(hrt, L"轻框LightFrame" ,ctl_x + 84, ctl_y + 22, 220, 40,20, VERTEXUICOLOR_WHITE,L"Segoe UI");
         D2DDrawText(hrt, L"Version:0.9.9", ctl_x + 15, ctl_y+ctl_h -28, 120, 40, 12, VERTEXUICOLOR_WHITE,L"Segoe UI",0.75f);
 
+        int ctl_x1 = 20; int ctl_y1 = 60+ctl_h+20; 
+        D2DDrawRoundRect(hrt, ctl_x1, ctl_y1, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+        static std::shared_ptr<VinaButton>test11 = std::make_shared<VinaButton>();
+        test11->Set(ctl_x1 + ctl_w - 185, ctl_y1 + ctl_h - 40, 80, 25, L"下载", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, RGB(82, 121, 251), 12.5);
+        MainWindow->GetPanel()->Add(test11);
+        static std::shared_ptr<VinaButton>test22 = std::make_shared<VinaButton>();
+        test22->Set(ctl_x1 + ctl_w - 95, ctl_y1 + ctl_h - 40, 80, 25, L"更新", [hWnd] {IsCfg = true;
+        AnimateMove = 0;
+        for (int i = 0; i < 30; i += 1)
+        {
+            AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
+            XSleep(5);
+            Refresh(hWnd);
+        }
+            }, RGB(82, 121, 251), 12.5);
+        MainWindow->GetPanel()->Add(test22);
+        D2DDrawRoundRect(hrt, ctl_x1 + 15, ctl_y1 + 15, 48, 48, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
+        D2DDrawText3(hrt, L"重框HeavyFrame", ctl_x1 + 84, ctl_y1 + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
+        D2DDrawText(hrt, L"Version:-0.114.51", ctl_x1 + 15, ctl_y1 + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+
         if (IsCfg == true)
         {
-
-            CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                AreaBlur(hrt, { 0,int(40*gScale+100*gScale- AnimateMove*gScale),int(rc.right),int(rc.bottom-40*gScale)}, 3, 5, 0);
-                });
+            if (rc.bottom <= 600*gScale)
+            {
+                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 3, 6, 0);
+                    });
+            }
+            else if (rc.bottom > 600 * gScale&& rc.bottom <800*gScale)
+            {
+                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2, 8, 0);
+                    });
+            }
+            else if (rc.bottom > 800 * gScale)
+            {
+                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2, 10, 0);
+                    });
+                D2DDrawSolidRect(hrt, 0, int((40 + 360) * gScale + 100 * gScale - AnimateMove * gScale), int(rc.right), int(rc.bottom - (40 + 360) * gScale), VERTEXUICOLOR_MIDNIGHT);
+            }
             static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
             layer->Set(0, 40, rc.right / gScale, rc.bottom / gScale);
             MainWindow->GetPanel()->Add(layer);
