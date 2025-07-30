@@ -1328,4 +1328,12 @@
       <Filter>库文件\openssl</Filter>
     </Library>
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="FA6_FREE.ttf">
+      <Filter>资源文件</Filter>
+    </Font>
+    <Font Include="FA6_SOLID.ttf">
+      <Filter>资源文件</Filter>
+    </Font>
+  </ItemGroup>
 </Project>
