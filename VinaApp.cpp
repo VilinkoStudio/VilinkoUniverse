@@ -21,6 +21,8 @@ static bool IsCfg = false;
 HINSTANCE hInst;                                // 当前实例
 HANDLE hMyFont;
 HGLOBAL hFntMem;
+std::wstring LatestVersion;
+std::wstring ChangeLog;
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -29,7 +31,38 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+
+    Json::Value paramsRoot;
+    Json::Reader jsonReader;
+    jsonReader.parse(ws2s(lpCmdLine), paramsRoot);
+
+    if (paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
+        if (paramsRoot["project"].asString() == "lightframe" &&
+            paramsRoot.isMember("build_date") && paramsRoot["build_date"].isString()) {
+            httplib::SSLClient httpcli("api.vertillusion.com");
+            httplib::Params params;
+            httplib::Headers headers = {
+                { "Vilinko-Project", "LightFrame" }
+            };
+            Json::Value resultRoot;
+            params.emplace("build_date", paramsRoot["build_date"].asString());
+
+            auto httpRes = httpcli.Get("/updater/check", params, headers);
+            if (!httpRes ||
+                httpRes->status != httplib::StatusCode::OK_200 ||
+                !jsonReader.parse(httpRes->body, resultRoot) ||
+                !resultRoot.isMember("data") ||
+                !resultRoot["data"].isMember("has_update") ||
+                !resultRoot["data"]["has_update"].asBool()
+                )
+                PostQuitMessage(0);
+
+            LatestVersion = s2ws(resultRoot["data"]["version"].asString());
+            ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+
+            IsCfg = true;
+        }
+    }
     
     SetDataBase();
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
@@ -159,24 +192,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             {
                 static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
                 test2->SetParent(MainWindow->GetPanel());
-                test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, LR"(-----TEST TEXT-----
-QWQ QWQ QWQ QWQ
-    QWQ QWQ QWQ
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-1234567890
-)", 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
+                test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
                 MainWindow->GetPanel()->Add(test2);
 
                 //D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);

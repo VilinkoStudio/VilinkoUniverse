@@ -38,3 +38,14 @@ void SetDataBase()
         mkdirs(LocalData2);
     }
 }
+
+std::string ws2s(const std::wstring& wstr) {
+    if (wstr.empty()) {
+        return "";
+    }
+
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+    return strTo;
+}
