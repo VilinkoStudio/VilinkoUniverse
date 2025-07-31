@@ -214,6 +214,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         MainWindow->GetPanel()->Add(close);
 
         static bool IsMaximized = false;
+        if (IsZoomed(hWnd) == true)IsMaximized = true;
+        else IsMaximized = false;
+
         if (IsMaximized == false)
         {
             static std::shared_ptr<VinaFAIcon>max = std::make_shared<VinaFAIcon>();
