@@ -61,7 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     !resultRoot["data"].isMember("has_update") ||
                     !resultRoot["data"]["has_update"].asBool()
                     )
-                    PostQuitMessage(0);
+                    return 0;
 
                 LatestVersion = s2ws(resultRoot["data"]["version"].asString());
                 ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
@@ -72,7 +72,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
     catch (Json::Exception e) {
         std::cerr << e.what() << std::endl;
-        PostQuitMessage(0);
+        return 0;
     }
 
     if (!lpCmdLine && !bParseSuccess)PostQuitMessage(0);
