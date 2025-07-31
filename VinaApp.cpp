@@ -11,7 +11,7 @@
 #include "VertexUI/VertexUI.Panel.h"
 #include "VertexUI/VertexUI.min.h"
 #include "MainUI.hpp"
-#include "VinaWindow.hpp"
+
 VertexUIInit;
 #define MAX_LOADSTRING 100
 
@@ -105,18 +105,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         D2DDrawSolidRect(hrt, 0, 0, rc.right, rc.bottom, VERTEXUICOLOR_MIDNIGHT);
         MainWindow->GetPanel()->Set(hWnd, hrt);
 
+        static int prevwinval = 0;
+
+        int winval = rc.bottom + rc.right;
+
+        if (winval!=prevwinval)ClearVector(btns);
+
+        prevwinval = winval;
+
+
+
         static bool ExtraMsg = true;
 
-
-        int ctl_x = 20; int ctl_y = 60; int ctl_w = rc.right/gScale-40; int ctl_h = 120;
-        D2DDrawRoundRect(hrt, ctl_x, ctl_y, ctl_w , ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
-
-        static std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
-        test1->Set(ctl_x+ctl_w-185, ctl_y+ctl_h-40, 80, 25, L"下载", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); },RGB( 82, 121, 251),12.5);
-        MainWindow->GetPanel()->Add(test1);
-        static std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
         static double AnimateMove = 0;
-        test2->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"更新", [hWnd] {IsCfg = true; 	
+
+        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -124,20 +127,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             XSleep(5);
             Refresh(hWnd);
         }
-            }, RGB(82, 121, 251), 12.5);
-        MainWindow->GetPanel()->Add(test2);
-        D2DDrawRoundRect(hrt, ctl_x+15, ctl_y+15, 48, 48, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
-        D2DDrawText3(hrt, L"轻框LightFrame" ,ctl_x + 84, ctl_y + 22, 220, 40,20, VERTEXUICOLOR_WHITE,L"Segoe UI");
-        D2DDrawText(hrt, L"Version:0.9.9", ctl_x + 15, ctl_y+ctl_h -28, 120, 40, 12, VERTEXUICOLOR_WHITE,L"Segoe UI",0.75f);
+            });
 
-        int ctl_x1 = 20; int ctl_y1 = 60+ctl_h+20; 
-        D2DDrawRoundRect(hrt, ctl_x1, ctl_y1, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
 
-        static std::shared_ptr<VinaButton>test11 = std::make_shared<VinaButton>();
-        test11->Set(ctl_x1 + ctl_w - 185, ctl_y1 + ctl_h - 40, 80, 25, L"下载", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, RGB(82, 121, 251), 12.5);
-        MainWindow->GetPanel()->Add(test11);
-        static std::shared_ptr<VinaButton>test22 = std::make_shared<VinaButton>();
-        test22->Set(ctl_x1 + ctl_w - 95, ctl_y1 + ctl_h - 40, 80, 25, L"更新", [hWnd] {IsCfg = true;
+        CreatePanelInfoBox(MainWindow, hrt, 2, L" 重框HeavyFrame", L"Version:-11.4.51", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -145,11 +138,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             XSleep(5);
             Refresh(hWnd);
         }
-            }, RGB(82, 121, 251), 12.5);
-        MainWindow->GetPanel()->Add(test22);
-        D2DDrawRoundRect(hrt, ctl_x1 + 15, ctl_y1 + 15, 48, 48, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
-        D2DDrawText3(hrt, L"重框HeavyFrame", ctl_x1 + 84, ctl_y1 + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
-        D2DDrawText(hrt, L"Version:-0.114.51", ctl_x1 + 15, ctl_y1 + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+            });
+
+        CreatePanelInfoBox(MainWindow, hrt, 3, L" 超重框HeaviestFrame", L"Version:-114.451.419", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
+        AnimateMove = 0;
+        for (int i = 0; i < 30; i += 1)
+        {
+            AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
+            XSleep(5);
+            Refresh(hWnd);
+        }
+            });
+
+        for (auto i : btns)
+        {
+            MainWindow->GetPanel()->Add(i);
+        }
 
         if (IsCfg == true)
         {
@@ -161,16 +165,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             }
             else if (rc.bottom > 600 * gScale&& rc.bottom <800*gScale)
             {
+                D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right / gScale), int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
                     AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2, 8, 0);
                     });
+
             }
             else if (rc.bottom > 800 * gScale)
             {
+                D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right) / gScale, int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
                     AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2, 10, 0);
                     });
-                D2DDrawSolidRect(hrt, 0, int((40 + 360) * gScale + 100 * gScale - AnimateMove * gScale), int(rc.right), int(rc.bottom - (40 + 360) * gScale), VERTEXUICOLOR_MIDNIGHT);
+
             }
             static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
             layer->Set(0, 40, rc.right / gScale, rc.bottom / gScale);

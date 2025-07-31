@@ -3,6 +3,7 @@
 #include "VinaCommonCtls.hpp"
 #include "VertexUI/vui.parser/vui.parser.hpp"
 #include "Vui.Foundation/Encoding.h"
+#include "VinaWindow.hpp"
 const wchar_t* testChar = LR"(
 Text{id("114514"),x(230),y(220),cx(100),cy(40),text("TextQAQ")}
 FontIcon{id("114519"),x(230),y(410),size(40),text("test-right")}
@@ -16,6 +17,29 @@ Button{id("QwQ31"),x(200),y(260),cx(200),cy(100),text("层5")}
 Button{id("QwQ4"),x(100),y(380),cx(100),cy(100),text("层6")}
 
 )";
+std::vector<std::shared_ptr<VinaButton>>btns;
+void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, const wchar_t* version, std::function<void()> btn1, std::function<void()> btn2,ID2D1Bitmap* ico = nullptr)
+{
+	RECT rc;
+	GetClientRect(Main->GetHandle(), &rc);
+	int ctl_h = 120;
+	int ctl_x = 20; int ctl_y = 60+(order-1)*(ctl_h+20); int ctl_w = rc.right / gScale - 40;
+	D2DDrawRoundRect(hrt, ctl_x, ctl_y, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+    std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
+		test1->Set(ctl_x + ctl_w - 185, ctl_y + ctl_h - 40, 80, 25, L"下载", btn1, RGB(82, 121, 251), 12.5);
+		if (btns.size()<order*2-1)btns.push_back(test1);
+	//	Main->GetPanel()->Add(test1);
+    std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
+
+	test2->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"更新",btn2, RGB(82, 121, 251), 12.5);
+	if (btns.size() < order*2)btns.push_back(test2);
+	D2DDrawRoundRect(hrt, ctl_x + 15, ctl_y + 15, 48, 48, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
+	D2DDrawText3(hrt, txt, ctl_x + 84, ctl_y + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
+	D2DDrawText(hrt, version, ctl_x + 15, ctl_y + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+}
+
+
 tsl::ordered_map < std::wstring, std::variant < std::monostate, std::shared_ptr<VinaButton>, std::shared_ptr<VinaText>, std::shared_ptr<VinaFAIcon>>> comVina;
 int ParseVinaCom() {
 	auto parser = vui::parser::wparser(testChar);
