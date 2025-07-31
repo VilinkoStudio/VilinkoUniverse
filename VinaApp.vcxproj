@@ -585,6 +585,10 @@
     <Library Include="lib\libcrypto.lib" />
     <Library Include="lib\libssl.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="FA6_FREE.ttf" />
+    <Font Include="FA6_SOLID.ttf" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
