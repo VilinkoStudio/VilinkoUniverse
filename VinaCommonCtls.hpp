@@ -571,6 +571,7 @@ public:
 	std::wstring CvtFont(std::wstring from)
 	{
 		if (from == std::wstring(L"test-right"))return std::wstring(L"\uf178");
+		if (from == std::wstring(L"test-right-upd"))return std::wstring(L"\uf178");
 		if (from == std::wstring(L"win-close"))return std::wstring(L"\uf00d");
 		if (from == std::wstring(L"win-max"))return std::wstring(L"\uf065");
 		if (from == std::wstring(L"win-min"))return std::wstring(L"\uf068");
@@ -586,6 +587,17 @@ public:
 		this->x = x;
 		this->y = y;
 		this->cx = TxtSize;
+		this->cy = TxtSize;
+	}
+	void Set(int x, int y,int cx, const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
+	{
+		this->func = events;
+		this->txtsz = TxtSize;
+		this->Clr = TxtColor;
+		this->txt = txt;
+		this->x = x;
+		this->y = y;
+		this->cx = cx;
 		this->cy = TxtSize;
 	}
 	virtual void CreateCtl(HWND hWnd, HRT hdc)
@@ -623,7 +635,20 @@ public:
 			nB = GetMaxValue(GetBValue(Clr) + num * 20 * fact, 255);
 			nClr = RGB(nR, nG, nB);
 			std::wstring newStr = this->CvtFont(txt.c_str());
-			D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			if (txt == std::wstring(L"test-left"))
+			{
+				D2DDrawText(hdc, newStr.c_str(), x - num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else if (txt == std::wstring(L"test-right"))
+			{
+				D2DDrawText(hdc, newStr.c_str(), x + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else if (txt == std::wstring(L"test-right-upd"))
+			{
+				D2DDrawText3(hdc, L"现在更新", x-5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-4, nClr, L"Segoe UI", 1);
+				D2DDrawText(hdc, newStr.c_str(), x+cx-txtsz + num * 3, (float)(y+1 + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 		}
 		else
 		{
@@ -656,7 +681,21 @@ public:
 				nClr = RGB(nR, nG, nB);
 			}
 			std::wstring newStr = this->CvtFont(txt.c_str());
-			D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			if (txt == std::wstring(L"test-left"))
+			{
+				D2DDrawText(hdc, newStr.c_str(), x-num*3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else if (txt == std::wstring(L"test-right"))
+			{
+				D2DDrawText(hdc, newStr.c_str(), x + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else if (txt == std::wstring(L"test-right-upd"))
+			{
+				D2DDrawText3(hdc, L"现在更新", x-5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-4, nClr, L"Segoe UI", 1);
+				D2DDrawText(hdc, newStr.c_str(), x + cx - txtsz + num * 3, (float)(y +1+ cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+
 		}
 	}
 	virtual int OnMouseUp()

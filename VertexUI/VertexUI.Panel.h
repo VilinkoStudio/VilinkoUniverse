@@ -243,6 +243,110 @@ namespace VertexUI
 		{
 			return GetRValue(OriClr) << 16 | GetGValue(OriClr) << 8 | GetBValue(OriClr);
 		}
+
+
+		template<class T>
+		void D2DDrawCircleArc(T* m_pDCRT, float x, float y, float rad, unsigned long arcClr, float animated, float strokeWidth = 2.0f, float alpha = 1.0f)
+		{
+			int hr = 0;
+			ID2D1SolidColorBrush* arcBrush = NULL;
+			hr = m_pDCRT->CreateSolidColorBrush(
+				D2D1::ColorF(D2D1::ColorF(RGBToHex(arcClr), alpha)),
+				&arcBrush
+			);
+
+			if (SUCCEEDED(hr))
+			{
+				// 创建笔刷样式
+				ID2D1StrokeStyle* strokeStyle = NULL;
+				D2D1_STROKE_STYLE_PROPERTIES strokeProperties = D2D1::StrokeStyleProperties(
+					D2D1_CAP_STYLE_ROUND,
+					D2D1_CAP_STYLE_ROUND,
+					D2D1_CAP_STYLE_ROUND
+				);
+
+				hr = m_pD2DFactory->CreateStrokeStyle(strokeProperties, NULL, 0, &strokeStyle);
+
+				if (SUCCEEDED(hr))
+				{
+					float sweepAngle = 0;
+					float startAngle = -3.141592653f / 2.0f; // 从顶部开始
+
+					// 处理动画逻辑：0-100正向显示，100-200反向消失
+					if (animated <= 100)
+					{
+						// 0-100: 正向显示
+						sweepAngle = (animated / 100.0f) * 2.0f * 3.141592653f;
+					}
+					else if (animated <= 200)
+					{
+						// 100-200: 反向消失（从完整圆开始，逐渐减少）
+						float progress = (animated - 100.0f) / 100.0f; // 0-1
+						sweepAngle = (1.0f - progress) * 2.0f * 3.141592653f;
+						startAngle = startAngle + progress * 2.0f * 3.141592653f; // 起始点移动
+					}
+					else
+					{
+						// 超过200时不显示
+						SafeRelease(&strokeStyle);
+						SafeRelease(&arcBrush);
+						return;
+					}
+
+					// 如果角度太小，不绘制
+					if (sweepAngle < 0.01f)
+					{
+						SafeRelease(&strokeStyle);
+						SafeRelease(&arcBrush);
+						return;
+					}
+
+					// 创建路径几何
+					ID2D1PathGeometry* pathGeometry = NULL;
+					hr = m_pD2DFactory->CreatePathGeometry(&pathGeometry);
+
+					if (SUCCEEDED(hr))
+					{
+						ID2D1GeometrySink* sink = NULL;
+						hr = pathGeometry->Open(&sink);
+
+						if (SUCCEEDED(hr))
+						{
+							// 起始点
+							D2D1_POINT_2F startPoint;
+							startPoint.x = x + rad * cos(startAngle);
+							startPoint.y = y + rad * sin(startAngle);
+
+							sink->BeginFigure(startPoint, D2D1_FIGURE_BEGIN_FILLED);
+
+							D2D1_ARC_SEGMENT arcSegment;
+							arcSegment.point.x = x + rad * cos(startAngle + sweepAngle);
+							arcSegment.point.y = y + rad * sin(startAngle + sweepAngle);
+							arcSegment.size.width = rad;
+							arcSegment.size.height = rad;
+							arcSegment.rotationAngle = 0.0f;
+							arcSegment.sweepDirection = D2D1_SWEEP_DIRECTION_CLOCKWISE;
+							arcSegment.arcSize = (sweepAngle > 3.141592653f) ? D2D1_ARC_SIZE_LARGE : D2D1_ARC_SIZE_SMALL;
+
+							sink->AddArc(&arcSegment);
+							sink->EndFigure(D2D1_FIGURE_END_OPEN);
+							sink->Close();
+
+							m_pDCRT->DrawGeometry(pathGeometry, arcBrush, strokeWidth, strokeStyle);
+
+							SafeRelease(&sink);
+						}
+
+						SafeRelease(&pathGeometry);
+					}
+
+					SafeRelease(&strokeStyle);
+				}
+
+				SafeRelease(&arcBrush);
+			}
+		}
+
 		template<class T>
 		void D2DDrawRoundRect(T* m_pDCRT, float x, float y, float cx, float cy, unsigned long ClrFill, float radius, float alpha = 1, float border = 0, unsigned long borderColor = 0, float borderAlphaSpecial = 0, bool OnlyBorder = false)
 		{
@@ -398,7 +502,7 @@ namespace VertexUI
 			return;
 		}
 		template<class T>
-		void D2DDrawText(T pRenderTarget, const wchar_t* Text, int x, int y, int cx, int cy, float Size = 18, unsigned long ClrFill = VERTEXUICOLOR_WHITE, const wchar_t* font = L"Segoe UI", float alpha = 1, DWRITE_FONT_WEIGHT wid = DWRITE_FONT_WEIGHT_NORMAL)
+		void D2DDrawText(T pRenderTarget, const wchar_t* Text, float x, float y, int cx, int cy, float Size = 18, unsigned long ClrFill = VERTEXUICOLOR_WHITE, const wchar_t* font = L"Segoe UI", float alpha = 1, DWRITE_FONT_WEIGHT wid = DWRITE_FONT_WEIGHT_NORMAL)
 		{
 			IDWriteTextFormat* pTextFormat = NULL;
 			ID2D1SolidColorBrush* testBrush = NULL;

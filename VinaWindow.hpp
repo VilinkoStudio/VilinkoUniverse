@@ -146,7 +146,7 @@ public:
 				case 10:
 				{
 
-					RefreshWindow(hWnd);
+					Refresh(hWnd);
 
 					break;
 				}
@@ -154,7 +154,7 @@ public:
 				{
 					if (GlobalAnimationCount >= 1)
 					{
-						RefreshWindow(hWnd);
+						Refresh(hWnd);
 					}
 					break;
 				}
@@ -275,6 +275,15 @@ public:
 	void SetProc(FunctionalProc proc)
 	{
 		ProcManager[std::wstring(this->szWindowClass)] = proc;
+	}
+	void InitAnimation()
+	{
+		SetTimer(hWnd, 11, 16,0);
+	}
+	void KillAnimation()
+	{
+		GlobalAnimationCount = 0;
+		KillTimer(hWnd, 11);
 	}
 	void SetOutFrame(int f)
 	{

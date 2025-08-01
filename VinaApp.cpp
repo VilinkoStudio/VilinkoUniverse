@@ -115,11 +115,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-        static bool ExtraMsg = true;
+
 
         static double AnimateMove = 0;
 
-        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
+        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] { Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -130,7 +130,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             });
 
 
-        CreatePanelInfoBox(MainWindow, hrt, 2, L" 重框HeavyFrame", L"Version:-11.4.51", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
+        CreatePanelInfoBox(MainWindow, hrt, 2, L" 重框HeavyFrame", L"Version:-11.4.51", [hWnd] {Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -140,7 +140,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
             });
 
-        CreatePanelInfoBox(MainWindow, hrt, 3, L" 超重框HeaviestFrame", L"Version:-114.451.419", [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, [hWnd] {IsCfg = true;
+        CreatePanelInfoBox(MainWindow, hrt, 3, L" 超重框HeaviestFrame", L"Version:-114.451.419", [hWnd] { Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -157,17 +157,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         if (IsCfg == true)
         {
+            static bool ExtraMsg = true;
             if (rc.bottom <= 600*gScale)
             {
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 3, 6, 0);
+                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) },3-(1.9-0.02*AnimateMove), 6, 0);
                     });
             }
             else if (rc.bottom > 600 * gScale&& rc.bottom <800*gScale)
             {
                 D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right / gScale), int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2, 8, 0);
+                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 8, 0);
                     });
 
             }
@@ -175,7 +176,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             {
                 D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right) / gScale, int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2, 10, 0);
+                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 10, 0);
                     });
 
             }
@@ -187,15 +188,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             bk->Set(20, 60 + 100- AnimateMove, L"test-left", 22, VERTEXUICOLOR_WHITE, [hWnd] {AnimateMove = 0;
             for (int i = 0; i < 30; i += 1)
             {
+
                 AnimateMove = -CalcBezierCurve(i, -100, 100, 30, .26, -0.25, .76, .2);
                 XSleep(5);
                 Refresh(hWnd);
-            } IsCfg = false; Refresh(hWnd); });
+                MainWindow->KillAnimation();
+            } IsCfg = false; Refresh(hWnd); ExtraMsg = true; });
             MainWindow->GetPanel()->Add(bk);
 
-            static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
-            notice->Set(20, 100+100-AnimateMove, rc.right / gScale - 40, 30, L"当前有更新可用。",VERTEXUICOLOR_SEA,12);
-            MainWindow->GetPanel()->Add(notice);
+           
             /*
             const wchar_t* btntxt;
             if (ExtraMsg == false)
@@ -210,6 +211,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             */
             if (ExtraMsg == true)
             {
+                static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
+                notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"当前有更新可用。", VERTEXUICOLOR_SEA, 12);
+                MainWindow->GetPanel()->Add(notice);
+
                 static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
                 test2->SetParent(MainWindow->GetPanel());
                 test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
@@ -218,6 +223,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 //D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
                 //D2DDrawText(hrt, L"Hello World\n12345678", 30, 140, rc.right / gScale - 70, 200, 18, VERTEXUICOLOR_WHITE);
 
+
+                static std::shared_ptr<VinaFAIcon>nxt = std::make_shared<VinaFAIcon>();
+                nxt->Set(rc.right / gScale - 25 - 100, 120 + 360 - AnimateMove, 100, L"test-right-upd", 22, VERTEXUICOLOR_WHITE, [hWnd] {ExtraMsg = false; GlobalAnimationCount++;    MainWindow->InitAnimation(); Refresh(hWnd); });
+                MainWindow->GetPanel()->Add(nxt);
+            }
+            else
+            {
+                
+
+                static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
+                notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"正在更新...",RGB(65, 174, 134), 12);
+                MainWindow->GetPanel()->Add(notice);
+
+                static int ani=0;
+                ani++;
+                double animove = CalcBezierCurve(ani, 0, 200, 100, .27, .04, .79, .98);
+                if (ani > 99)ani = 0;
+
+                D2DDrawCircleArc(hrt, rc.right / gScale / 2 - 7, 120 + 160 - AnimateMove, 15, VERTEXUICOLOR_SEA, animove,3);
+
+                D2DDrawText2(hrt, L"当前步骤...", -2, 120 + 200 - AnimateMove, rc.right / gScale, 20, 14, VERTEXUICOLOR_WHITE,L"Segoe UI",1,true);
             }
         }
         //82 121 251

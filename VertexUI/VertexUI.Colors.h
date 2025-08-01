@@ -44,7 +44,11 @@ int GetMinValue(int num, int min)
 	if (num <= min)return min;
 	else return num;
 }
-
+double GetMinValue2(double num, double min)
+{
+	if (num <= min)return min;
+	else return num;
+}
 int SetColorBright(int c,int b,bool DarkModeNotChange=false)
 {
 	if (c > 128) { if (c - b >= 255)return 255; else return c - b; }
