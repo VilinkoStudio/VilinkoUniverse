@@ -113,11 +113,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         prevwinval = winval;
 
-
-
-
-
         static double AnimateMove = 0;
+
+        static bool isAbout = false;
 
         CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] { Refresh(hWnd); }, [hWnd] {IsCfg = true;
         AnimateMove = 0;
@@ -158,27 +156,35 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         if (IsCfg == true)
         {
             static bool ExtraMsg = true;
-            if (rc.bottom <= 600*gScale)
-            {
-                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) },3-(1.9-0.02*AnimateMove), 6, 0);
-                    });
+            if (isAbout == true)
+            {  
+                D2DDrawSolidRect(hrt, 0, 100 - AnimateMove, rc.right, rc.bottom, VERTEXUICOLOR_MIDNIGHT);
             }
-            else if (rc.bottom > 600 * gScale&& rc.bottom <800*gScale)
+            else
             {
-                D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right / gScale), int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
-                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 8, 0);
-                    });
 
-            }
-            else if (rc.bottom > 800 * gScale)
-            {
-                D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right) / gScale, int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
-                CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 10, 0);
-                    });
+                if (winval <= 1920 * gScale)
+                {
+                    CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                        AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 3 - (1.9 - 0.02 * AnimateMove), 6, 0);
+                        });
+                }
+                else if (winval > 1920 * gScale && winval < 2580 * gScale)
+                {
+                    D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right / gScale), int(rc.bottom / gScale - 40), VERTEXUICOLOR_MIDNIGHT);
+                    CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                        AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(rc.bottom - 40 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 8, 0);
+                        });
 
+                }
+                else if (winval > 2580 * gScale)
+                {
+                    D2DDrawSolidRect(hrt, 0, int((360) + 100 - AnimateMove), int(rc.right) / gScale, int(rc.bottom / gScale - (40 + 360)), VERTEXUICOLOR_MIDNIGHT);
+                    CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                        AreaBlur3(hrt, { 0,int(40 * gScale + 100 * gScale - AnimateMove * gScale),int(rc.right),int(360 * gScale) }, 2 - (0.9 - 0.01 * AnimateMove), 10, 0);
+                        });
+
+                }
             }
             static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
             layer->Set(0, 40, rc.right / gScale, rc.bottom / gScale);
@@ -193,7 +199,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 XSleep(5);
                 Refresh(hWnd);
                 MainWindow->KillAnimation();
-            } IsCfg = false; Refresh(hWnd); ExtraMsg = true; });
+            } IsCfg = false;isAbout = false; Refresh(hWnd); ExtraMsg = true; });
             MainWindow->GetPanel()->Add(bk);
 
            
@@ -209,50 +215,58 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             test1->Set(20, 100, 100, 40, btntxt, [hWnd] {ExtraMsg = !ExtraMsg; Refresh(hWnd); }, VERTEXUICOLOR_MIDNIGHTPLUS);
             MainWindow->GetPanel()->Add(test1);
             */
-            if (ExtraMsg == true)
+            if (isAbout == true)
             {
-                static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
-                notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"当前有更新可用。", VERTEXUICOLOR_SEA, 12);
-                MainWindow->GetPanel()->Add(notice);
-
-                static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
-                test2->SetParent(MainWindow->GetPanel());
-                test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
-                MainWindow->GetPanel()->Add(test2);
-
-                //D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
-                //D2DDrawText(hrt, L"Hello World\n12345678", 30, 140, rc.right / gScale - 70, 200, 18, VERTEXUICOLOR_WHITE);
-
-
-                static std::shared_ptr<VinaFAIcon>nxt = std::make_shared<VinaFAIcon>();
-                nxt->Set(rc.right / gScale - 25 - 100, 120 + 360 - AnimateMove, 100, L"test-right-upd", 22, VERTEXUICOLOR_WHITE, [hWnd] {ExtraMsg = false; GlobalAnimationCount++;    MainWindow->InitAnimation(); Refresh(hWnd); });
-                MainWindow->GetPanel()->Add(nxt);
+                DrawDisplayBox2(hrt, RGB(163, 139, 251),25, 105 + 100 - AnimateMove,300,GetMinValue(GetMaxValue( AnimateMove*2,220),1), L"Test", L"QwQ");
+                DrawDisplayBox2(hrt,RGB(240, 141, 56), 25+25+300, 105 + 100 - AnimateMove, 300, GetMinValue(GetMaxValue(AnimateMove * 2, 220), 1), L"Test", L"QwQ");
             }
             else
             {
-                
+                if (ExtraMsg == true)
+                {
+                    static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
+                    notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"当前有更新可用。", VERTEXUICOLOR_SEA, 12);
+                    MainWindow->GetPanel()->Add(notice);
 
-                static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
-                notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"正在更新...",RGB(65, 174, 134), 12);
-                MainWindow->GetPanel()->Add(notice);
+                    static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
+                    test2->SetParent(MainWindow->GetPanel());
+                    test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
+                    MainWindow->GetPanel()->Add(test2);
 
-                static int ani=0;
-                ani++;
-                double animove = CalcBezierCurve(ani, 0, 200, 100, .27, .04, .79, .98);
-                if (ani > 99)ani = 0;
+                    //D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+                    //D2DDrawText(hrt, L"Hello World\n12345678", 30, 140, rc.right / gScale - 70, 200, 18, VERTEXUICOLOR_WHITE);
 
-                D2DDrawCircleArc(hrt, rc.right / gScale / 2 - 7, 120 + 160 - AnimateMove, 15, VERTEXUICOLOR_SEA, animove,3);
 
-                D2DDrawText2(hrt, L"当前步骤...", -2, 120 + 200 - AnimateMove, rc.right / gScale, 20, 14, VERTEXUICOLOR_WHITE,L"Segoe UI",1,true);
+                    static std::shared_ptr<VinaFAIcon>nxt = std::make_shared<VinaFAIcon>();
+                    nxt->Set(rc.right / gScale - 25 - 100, 120 + 360 - AnimateMove, 100, L"test-right-upd", 22, VERTEXUICOLOR_WHITE, [hWnd] {ExtraMsg = false; GlobalAnimationCount++;    MainWindow->InitAnimation(); Refresh(hWnd); });
+                    MainWindow->GetPanel()->Add(nxt);
+                }
+                else
+                {
+
+
+                    static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
+                    notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"正在更新...", RGB(65, 174, 134), 12);
+                    MainWindow->GetPanel()->Add(notice);
+
+                    static int ani = 0;
+                    ani++;
+                    double animove = CalcBezierCurve(ani, 0, 200, 100, .27, .04, .79, .98);
+                    if (ani > 99)ani = 0;
+
+                    D2DDrawCircleArc(hrt, rc.right / gScale / 2 - 7, 120 + 160 - AnimateMove, 15, VERTEXUICOLOR_SEA, animove, 3);
+
+                    D2DDrawText2(hrt, L"当前步骤...", -2, 120 + 200 - AnimateMove, rc.right / gScale, 20, 14, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, true);
+                }
             }
         }
         //82 121 251
         
        
-        
+        static bool isMenu = false;
 
         static std::shared_ptr<VinaCaptionBar>capt = std::make_shared<VinaCaptionBar>();
-        capt->Set(0, 0, rc.right / gScale - 120, 40, L"Vilinko Universe", VERTEXUICOLOR_MIDNIGHT, 18);
+        capt->Set(0, 0, rc.right / gScale - 160, 40, L"Vilinko Universe", VERTEXUICOLOR_MIDNIGHT, 18);
         MainWindow->GetPanel()->Add(capt);
 
         static std::shared_ptr<VinaFAIcon>close = std::make_shared<VinaFAIcon>();
@@ -279,9 +293,48 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             MainWindow->GetPanel()->Add(max);
         }
         static std::shared_ptr<VinaFAIcon>min = std::make_shared<VinaFAIcon>();
-        min->Set(rc.right / gScale - 32 - 32 - 32, 20, L"win-min", 15, VERTEXUICOLOR_WHITE, [hWnd] {SendMessage(hWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0); });
+        min->Set(rc.right / gScale - 32 - 32 - 32, 20, L"win-min", 15, VERTEXUICOLOR_WHITE, [hWnd] {MainWindow->KillAnimation(); SendMessage(hWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0); });
         MainWindow->GetPanel()->Add(min);
 
+        static std::shared_ptr<VinaFAIcon>more = std::make_shared<VinaFAIcon>();
+        more->Set(rc.right / gScale - 32 - 32 - 32 - 25, 20, L"test-more3", 15, VERTEXUICOLOR_WHITE, [hWnd] {isMenu = true; GlobalAnimationCount+=1; MainWindow->InitAnimation(); });
+        MainWindow->GetPanel()->Add(more);
+
+        if (isMenu == true)
+        {
+            static int ani = 0;
+            static double animove = 0;
+            if (ani > 96&&ani<100) { GlobalAnimationCount -= 1; }
+            else if(ani > 96){}
+            else {
+                ani+=4;
+                animove = CalcBezierCurve(ani, 0, 120, 100, .54, .65, .61, .99);
+            }
+            static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
+            layer->Set(0, 0, rc.right / gScale, rc.bottom / gScale, [] {isMenu = false; ani = 0; });
+            MainWindow->GetPanel()->Add(layer);
+
+            CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
+                AreaBlur3(hrt, { (int)(rc.right - (32 + 32 + 32 + 25)*gScale),(int)(25*gScale),(int)((animove/1.1)*gScale),(int)((animove/3.2)*gScale) }, 3, 2, 0);
+                });
+            D2DDrawRoundRect(hrt, rc.right/gScale - (32 + 32 + 32 + 25)-1 ,23, (animove / 1.1)+2, animove/3.2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 0.75, 2,VuiFadeColor( VERTEXUICOLOR_MIDNIGHTPLUS,20));
+
+            static std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
+            test1->Set(rc.right / gScale - (32 + 32 + 32 + 25) +6, 23+6, (animove / 1.1) - 12, animove/5, L"关于" ,[hWnd]{
+                isMenu = false; ani = 0;
+                IsCfg = true;
+                isAbout = true;
+                AnimateMove = 0;
+                for (int i = 0; i < 30; i += 1)
+                {
+                    AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
+                    XSleep(5);
+                    Refresh(hWnd);
+                }
+
+                }, VERTEXUICOLOR_MIDNIGHTPLUS,GetMinValue2(GetMaxValue2(animove/6, 12.5),2));
+            MainWindow->GetPanel()->Add(test1);
+        }
         });
         
     MainWindow->SetOutFrame(VinaWindow::Client);

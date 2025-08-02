@@ -38,7 +38,11 @@ void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, 
 	D2DDrawText3(hrt, txt, ctl_x + 84, ctl_y + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
 	D2DDrawText(hrt, version, ctl_x + 15, ctl_y + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
 }
-
+void DrawDisplayBox2(HRT hrt, unsigned long clr,int x,int y,int cx,int cy,const wchar_t* title,const wchar_t* des)
+{
+	D2DDrawRoundRect(hrt, x, y, cx, cy, VERTEXUICOLOR_MIDNIGHTPLUS, 20, 1);
+	D2DDrawRoundRect(hrt, x+10, y+10, cx-20, cy/3,clr, 20, 1);
+}
 
 tsl::ordered_map < std::wstring, std::variant < std::monostate, std::shared_ptr<VinaButton>, std::shared_ptr<VinaText>, std::shared_ptr<VinaFAIcon>>> comVina;
 int ParseVinaCom() {

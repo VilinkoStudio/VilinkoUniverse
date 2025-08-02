@@ -39,6 +39,11 @@ int GetMaxValue(int num, int max)
 	if (num >= max)return max;
 	else return num;
 }
+double GetMaxValue2(double num, double max)
+{
+	if (num >= max)return max;
+	else return num;
+}
 int GetMinValue(int num, int min)
 {
 	if (num <= min)return min;

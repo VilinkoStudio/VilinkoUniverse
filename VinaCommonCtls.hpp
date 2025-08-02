@@ -574,9 +574,14 @@ public:
 		if (from == std::wstring(L"test-right-upd"))return std::wstring(L"\uf178");
 		if (from == std::wstring(L"win-close"))return std::wstring(L"\uf00d");
 		if (from == std::wstring(L"win-max"))return std::wstring(L"\uf065");
+		if (from == std::wstring(L"win-winmax"))return std::wstring(L"\uf424");
+		if (from == std::wstring(L"win-winrestore"))return std::wstring(L"\uf422");
 		if (from == std::wstring(L"win-min"))return std::wstring(L"\uf068");
 		if (from == std::wstring(L"win-restore"))return std::wstring(L"\uf066");
 		if (from == std::wstring(L"test-left"))return std::wstring(L"\uf177");
+		if (from == std::wstring(L"test-more"))return std::wstring(L"\uf141");
+		if (from == std::wstring(L"test-more2"))return std::wstring(L"\uf52c");
+		if (from == std::wstring(L"test-more3"))return std::wstring(L"\uf142");
 	}
 	void Set(int x, int y,  const wchar_t* txt, int TxtSize = 15, unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {})
 	{
@@ -1126,12 +1131,13 @@ protected:
 };
 class VinaBarrier : public VertexUIControl {
 public:
-	void Set(int x, int y, int cx, int cy)
+	void Set(int x, int y, int cx, int cy,std::function<void()>fun=[]{})
 	{
 		this->x = x;
 		this->y = y;
 		this->cx = cx;
 		this->cy = cy;
+		this->func = fun;
 	}
 	virtual void CreateCtl(HWND hWnd, HRT hdc)
 	{
@@ -1150,6 +1156,7 @@ public:
 	{
 		//	ap = 0;
 		//this->IsPushed = true;
+		func();
 		Refresh(hWnd);
 		return 0;
 	}
