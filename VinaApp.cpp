@@ -217,8 +217,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             */
             if (isAbout == true)
             {
-                DrawDisplayBox2(hrt, RGB(163, 139, 251),25, 105 + 100 - AnimateMove,300,GetMinValue(GetMaxValue( AnimateMove*2,220),1), L"Test", L"QwQ");
-                DrawDisplayBox2(hrt,RGB(240, 141, 56), 25+25+300, 105 + 100 - AnimateMove, 300, GetMinValue(GetMaxValue(AnimateMove * 2, 220), 1), L"Test", L"QwQ");
+                DrawDisplayBox2(hrt, RGB(163, 139, 251),25, 105 + 100 - AnimateMove,300,GetMinValue(GetMaxValue( AnimateMove*2,220),1), L"沫海CimiMoly", L"\"星河如沫，映入澄曈\"\n去海岸 望星河 永远向圆满。");
+                DrawDisplayBox2(hrt,RGB(240, 141, 56), 25+25+300, 105 + 100 - AnimateMove, 300, GetMinValue(GetMaxValue(AnimateMove * 2, 220), 1), L"悠笙iYoRoy", L"「愿世间万物都能被温柔以待。」");
+                D2DDrawText(hrt, L"( 以上是参加 Vilinko Universe 的开发者。其他项目请参考相关\"关于\"页面。)\nCopyright © 2025 Vilinko Studio  |  感谢每一个为项目贡献的小伙伴！", 25, 330 , rc.right / gScale, 24,GetMinValue(GetMaxValue(AnimateMove/5, 16),1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
             }
             else
             {
@@ -307,7 +308,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             if (ani > 96&&ani<100) { GlobalAnimationCount -= 1; }
             else if(ani > 96){}
             else {
-                ani+=4;
+                ani+=6;
                 animove = CalcBezierCurve(ani, 0, 120, 100, .54, .65, .61, .99);
             }
             static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();

@@ -41,7 +41,9 @@ void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, 
 void DrawDisplayBox2(HRT hrt, unsigned long clr,int x,int y,int cx,int cy,const wchar_t* title,const wchar_t* des)
 {
 	D2DDrawRoundRect(hrt, x, y, cx, cy, VERTEXUICOLOR_MIDNIGHTPLUS, 20, 1);
-	D2DDrawRoundRect(hrt, x+10, y+10, cx-20, cy/3,clr, 20, 1);
+	D2DDrawRoundRect(hrt, x + 10, y + 10, cx - 20, cy / 3, clr, 20, 1);
+	D2DDrawText3(hrt, title, x + 25, y +20, cx - 20, cy / 3, GetMinValue( cy / 3 - 35,2),VERTEXUICOLOR_WHITE);
+	D2DDrawText(hrt, des, x + 20, y + cy / 3+25, cx - 20, cy / 3, GetMinValue(cy / 14, 2), VERTEXUICOLOR_WHITE,L"Segoe UI",0.85);
 }
 
 tsl::ordered_map < std::wstring, std::variant < std::monostate, std::shared_ptr<VinaButton>, std::shared_ptr<VinaText>, std::shared_ptr<VinaFAIcon>>> comVina;
