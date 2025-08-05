@@ -16,6 +16,7 @@ VertexUIInit;
 #define MAX_LOADSTRING 100
 
 static bool IsCfg = false;
+static bool UpdateMode = false;
 
 // 全局变量:
 HINSTANCE hInst;                                // 当前实例
@@ -67,6 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
 
                 IsCfg = true;
+                UpdateMode = true;
             }
         }
     }
@@ -155,6 +157,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         if (IsCfg == true)
         {
+            if (UpdateMode)AnimateMove = 100, UpdateMode = false;
             static bool ExtraMsg = true;
             if (isAbout == true)
             {  
