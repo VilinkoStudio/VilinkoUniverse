@@ -12,15 +12,21 @@ void SetDataBase()
     GetAppdataPath(LocalAppData);
     GetAppdataPath(test);
     GetAppdataPathA(LocalDataA);
+    GetAppdataPath(LocalLFData);
+    GetAppdataPathA(LocalLFDataA);
 
 
     wcscat(LocalData, L"\\Vilinko\\VisUniverse");
     strcat(LocalDataA, "\\Vilinko\\VisUniverse");
+    wcscat(LocalLFData, L"\\LightFrame");
+    strcat(LocalLFDataA, "\\LightFrame");
 
     wcscpy(LocalData2, LocalData);
     wcscpy(LocalRes, LocalData);
     wcscpy(LocalCache, LocalData);
     strcpy(LocalCacheA, LocalDataA);
+    wcscpy(LocalLFCache, LocalLFData);
+    strcpy(LocalLFCacheA, LocalLFDataA);
 
     wcscpy(LocalCom, LocalData);
     wcscpy(LocalCards, LocalData);
@@ -31,6 +37,8 @@ void SetDataBase()
 
     wcscat(LocalCache, L"\\Vilinko\\VisUniverse\\VisUniverse.vui");
     strcat(LocalCacheA, "\\Vilinko\\VisUniverse\\VisUniverse.vui");
+    wcscat(LocalLFCache, L"\\LightFrame.vui");
+    strcat(LocalLFCacheA, "\\LightFrame.vui");
     wcscat(LocalRes, L"\\Vilinko\\VisUniverse\\reslib");
 
     SetTagW(LocalData2, L"\\", L"/");

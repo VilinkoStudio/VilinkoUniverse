@@ -26,10 +26,14 @@ enum class UpdateStatus {
 HINSTANCE hInst;                                // 当前实例
 HANDLE hMyFont;
 HGLOBAL hFntMem;
-std::wstring LatestVersion;
-std::wstring ChangeLog;
-std::string InstallPath;
-std::string DownloadURL;
+struct projectInfo {
+    std::wstring LatestVersion;
+    std::wstring ChangeLog;
+    std::wstring BuildDate;
+    std::wstring InstallPath;
+    std::string DownloadURL;
+};
+std::unordered_map< std::wstring,projectInfo>project;
 std::thread thUpdate;
 UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
 
@@ -41,19 +45,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
 
+    SetDataBase();
+
     bool bParseSuccess = false;
     Json::Value paramsRoot;
     Json::Reader jsonReader;
 
+
     try {
         if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
-            if (paramsRoot["project"].asString() == "lightframe" &&
-                paramsRoot.isMember("build_date") && paramsRoot["build_date"].isString() &&
-                paramsRoot.isMember("path") && paramsRoot["path"].isString()) {
+            if (paramsRoot["project"].asString() == "lightframe" ) {
                 
+
+                auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
+
+                const wchar_t* path = VUIGetObject(obj, "AppDir");
+                const wchar_t* date = VUIGetObject(obj, "BuildDate");
+                project[L"lightframe"].InstallPath = std::wstring(path);
+                project[L"lightframe"].BuildDate = std::wstring(date);
+
+
                 bParseSuccess = true;
 
-                InstallPath = paramsRoot["path"].asString();
+                //InstallPath = paramsRoot["path"].asString();
 
                 httplib::SSLClient httpcli("api.vertillusion.com");
                 httplib::Params params;
@@ -61,7 +75,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     { "Vilinko-Project", "LightFrame" }
                 };
                 Json::Value resultRoot;
-                params.emplace("build_date", paramsRoot["build_date"].asString());
+                params.emplace("build_date",WString2String( project[L"lightframe"].BuildDate));
 
                 auto httpRes = httpcli.Get("/updater/check", params, headers);
                 if (!httpRes ||
@@ -73,9 +87,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     )
                     return 0;
 
-                LatestVersion = s2ws(resultRoot["data"]["version"].asString());
-                ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
-                DownloadURL = resultRoot["data"]["download_url"].asString();
+                project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
+                project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+                project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
 
                 IsCfg = true;
                 UpdateMode = true;
@@ -89,7 +103,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     if (!lpCmdLine && !bParseSuccess)PostQuitMessage(0);
 
-    SetDataBase();
+
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
     HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
     if (hFntRes) { // If we have found the resource ... 
@@ -110,6 +124,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gScale = GetScreenScale();
     //LoadVinaCom();
 
+
+
+
+
     MainWindow->Set(100, 100, 720 * gScale, 480 * gScale, L"Vina.Class.App.Main", L"Vilinko Universe");
     MainWindow->CreatePanel([](HWND hWnd, ID2D1HwndRenderTarget* hrt)->void {
         RECT rc;  
@@ -129,28 +147,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         static bool isAbout = false;
 
-        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] { Refresh(hWnd); }, [hWnd] {IsCfg = true;
-        AnimateMove = 0;
-        for (int i = 0; i < 30; i += 1)
-        {
-            AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
-            XSleep(5);
-            Refresh(hWnd);
-        }
-            });
+        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] { Refresh(hWnd); }, [hWnd] {
+            auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
 
-
-        CreatePanelInfoBox(MainWindow, hrt, 2, L" 重框HeavyFrame", L"Version:-11.4.51", [hWnd] {Refresh(hWnd); }, [hWnd] {IsCfg = true;
-        AnimateMove = 0;
-        for (int i = 0; i < 30; i += 1)
-        {
-            AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
-            XSleep(5);
-            Refresh(hWnd);
-        }
-            });
-
-        CreatePanelInfoBox(MainWindow, hrt, 3, L" 超重框HeaviestFrame", L"Version:-114.451.419", [hWnd] { Refresh(hWnd); }, [hWnd] {IsCfg = true;
+            const wchar_t* path = VUIGetObject(obj, "AppDir");
+            const wchar_t* date = VUIGetObject(obj, "BuildDate");
+            project[L"lightframe"].InstallPath = std::wstring(path);
+            project[L"lightframe"].BuildDate = std::wstring(date);
+            
+            IsCfg = true;
         AnimateMove = 0;
         for (int i = 0; i < 30; i += 1)
         {
@@ -244,7 +249,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                     static std::shared_ptr<VinaMultiTextBox>test2 = std::make_shared<VinaMultiTextBox>();
                     test2->SetParent(MainWindow->GetPanel());
-                    test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
+                    test2->Set(20, 155 + 100 - AnimateMove, rc.right / gScale - 40, 200, project[L"lightframe"].ChangeLog.c_str(), 18, VERTEXUICOLOR_WHITE, VERTEXUICOLOR_MIDNIGHTPLUS);
                     MainWindow->GetPanel()->Add(test2);
 
                     //D2DDrawRoundRect(hrt, 20, 120, rc.right/gScale - 40, 200, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
@@ -263,7 +268,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                             std::string host, path;
                             std::regex url_regex(R"((https?)://([^/]+)(/.*)?)", std::regex::icase);
                             std::smatch match;
-                            if (std::regex_match(DownloadURL, match, url_regex)) {
+                            if (std::regex_match(project[L"lightframe"].DownloadURL, match, url_regex)) {
                                 host = match[2].str();
                                 path = match[3].str().empty() ? "/" : match[3].str();
                             }
@@ -280,15 +285,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                                 return 0;
                             }
                             mUpdateStatus = UpdateStatus::REPLACING;
-                            WaitForLightFrameExit(s2ws(InstallPath));
+                            WaitForLightFrameExit(project[L"lightframe"].InstallPath);
                             XSleep(500);
-                            std::ofstream WriteFile(InstallPath, std::ios::binary);
+                            std::ofstream WriteFile(project[L"lightframe"].InstallPath, std::ios::binary);
                             WriteFile << res->body;
                             WriteFile.close();
                             PROCESS_INFORMATION ProInfo;
                             STARTUPINFO    StartInfo;
                             ZeroMemory(&StartInfo, sizeof(StartInfo));
-                            CreateProcess(NULL, s2ws(InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo);
+                            CreateProcess(NULL, wstrcopy(project[L"lightframe"].InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo);
                             mUpdateStatus = UpdateStatus::SUCCESS;
                             MainWindow->KillAnimation();
                             return 0;

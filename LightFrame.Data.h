@@ -9,10 +9,14 @@
 #pragma warning(disable:4996)
 wchar_t LocalAppData[MAX_PATH] = L""; //Tag"\\"
 wchar_t LocalData[MAX_PATH] = L""; //Tag"\\"
+char LocalLFDataA[MAX_PATH] = ""; //Tag"\\"
+wchar_t LocalLFData[MAX_PATH] = L""; //Tag"\\"
 char LocalDataA[MAX_PATH] = ""; //Tag"\\"
 wchar_t LocalData2[MAX_PATH] = L"";//Tag "/"
 wchar_t LocalCache[MAX_PATH] = L""; //Tag"vui"
 char LocalCacheA[MAX_PATH] = ""; //Tag"vui"
+wchar_t LocalLFCache[MAX_PATH] = L""; //Tag"vui"
+char LocalLFCacheA[MAX_PATH] = ""; //Tag"vui"
 wchar_t LocalCache2[MAX_PATH] = L""; //Tag"vui //"
 wchar_t LocalRes[MAX_PATH] = L""; //Tag"\\"
 
@@ -29,6 +33,16 @@ wchar_t* s2ws(std::string str)
 	wchar_t* const ret = buf;
 	return ret;
 }
+wchar_t* wstrcopy(std::wstring str)
+{
+	int len = str.size();
+	wchar_t* buf = new wchar_t[len + 1];
+	wcscpy(buf, str.c_str());
+	buf[len] = '\0';
+	wchar_t* const ret = buf;
+	return ret;
+}
+
 
 std::wstring GetNameFromPath(std::wstring a)
 {
