@@ -27,12 +27,12 @@ void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, 
 	D2DDrawRoundRect(hrt, ctl_x, ctl_y, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
 
     std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
-		test1->Set(ctl_x + ctl_w - 185, ctl_y + ctl_h - 40, 80, 25, L"下载", btn1, RGB(82, 121, 251), 12.5);
+		test1->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"启动", btn1, RGB(82, 121, 251), 12.5);
 		if (btns.size()<order*2-1)btns.push_back(test1);
 	//	Main->GetPanel()->Add(test1);
     std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
 
-	test2->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"更新",btn2, RGB(82, 121, 251), 12.5);
+	test2->Set(ctl_x + ctl_w - 185, ctl_y + ctl_h - 40, 80, 25, L"更新",btn2, RGB(82, 121, 251), 12.5);
 	if (btns.size() < order*2)btns.push_back(test2);
 	D2DDrawRoundRect(hrt, ctl_x + 15, ctl_y + 15, 48, 48, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
 	D2DDrawText3(hrt, txt, ctl_x + 84, ctl_y + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
