@@ -24,7 +24,7 @@ HANDLE hMyFont;
 HGLOBAL hFntMem;
 std::wstring LatestVersion;
 std::wstring ChangeLog;
-std::wstring InstallPath;
+std::string InstallPath;
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -45,6 +45,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 paramsRoot.isMember("path") && paramsRoot["path"].isString()) {
 
                 bParseSuccess = true;
+
+                InstallPath = paramsRoot["path"].asString();
 
                 httplib::SSLClient httpcli("api.vertillusion.com");
                 httplib::Params params;
