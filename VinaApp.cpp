@@ -290,6 +290,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                             ZeroMemory(&StartInfo, sizeof(StartInfo));
                             CreateProcess(NULL, s2ws(InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo);
                             mUpdateStatus = UpdateStatus::SUCCESS;
+                            MainWindow->KillAnimation();
                             return 0;
                             });
                         });
