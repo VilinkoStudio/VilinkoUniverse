@@ -17,6 +17,10 @@ VertexUIInit;
 
 static bool IsCfg = false;
 static bool UpdateMode = false;
+short DownloadProgress;
+enum class UpdateStatus {
+    PENDING, DOWNLOADING, REPLACING, SUCCESS, ERR
+};
 
 // 全局变量:
 HINSTANCE hInst;                                // 当前实例
@@ -25,6 +29,9 @@ HGLOBAL hFntMem;
 std::wstring LatestVersion;
 std::wstring ChangeLog;
 std::string InstallPath;
+std::string DownloadURL;
+std::thread thUpdate;
+UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -43,7 +50,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             if (paramsRoot["project"].asString() == "lightframe" &&
                 paramsRoot.isMember("build_date") && paramsRoot["build_date"].isString() &&
                 paramsRoot.isMember("path") && paramsRoot["path"].isString()) {
-
+                
                 bParseSuccess = true;
 
                 InstallPath = paramsRoot["path"].asString();
@@ -68,6 +75,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                 LatestVersion = s2ws(resultRoot["data"]["version"].asString());
                 ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+                DownloadURL = resultRoot["data"]["download_url"].asString();
 
                 IsCfg = true;
                 UpdateMode = true;
@@ -244,15 +252,68 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
                     static std::shared_ptr<VinaFAIcon>nxt = std::make_shared<VinaFAIcon>();
-                    nxt->Set(rc.right / gScale - 25 - 100, 120 + 360 - AnimateMove, 100, L"test-right-upd", 22, VERTEXUICOLOR_WHITE, [hWnd] {ExtraMsg = false; GlobalAnimationCount++;    MainWindow->InitAnimation(); Refresh(hWnd); });
+
+                    nxt->Set(rc.right / gScale - 25 - 100, 120 + 360 - AnimateMove, 100, L"test-right-upd", 22, VERTEXUICOLOR_WHITE, [hWnd] {
+                        ExtraMsg = false;
+                        GlobalAnimationCount++;
+                        MainWindow->InitAnimation();
+                        Refresh(hWnd);
+                        thUpdate = std::thread([] {
+                            mUpdateStatus = UpdateStatus::PENDING;
+                            std::string host, path;
+                            std::regex url_regex(R"((https?)://([^/]+)(/.*)?)", std::regex::icase);
+                            std::smatch match;
+                            if (std::regex_match(DownloadURL, match, url_regex)) {
+                                host = match[2].str();
+                                path = match[3].str().empty() ? "/" : match[3].str();
+                            }
+                            httplib::Client httpcli(host);
+                            httpcli.set_follow_location(true);
+                            mUpdateStatus = UpdateStatus::DOWNLOADING;
+                            auto res = httpcli.Get(path, [](size_t len, size_t total) {
+                                DownloadProgress = (len * 1.0 / total) * 100 + 1;
+                                return true;
+                                }
+                            );
+                            if (!res) {
+                                mUpdateStatus = UpdateStatus::ERR;
+                                return 0;
+                            }
+                            mUpdateStatus = UpdateStatus::REPLACING;
+                            WaitForLightFrameExit(s2ws(InstallPath));
+                            XSleep(500);
+                            std::ofstream WriteFile(InstallPath, std::ios::binary);
+                            WriteFile << res->body;
+                            WriteFile.close();
+                            PROCESS_INFORMATION ProInfo;
+                            STARTUPINFO    StartInfo;
+                            ZeroMemory(&StartInfo, sizeof(StartInfo));
+                            CreateProcess(NULL, s2ws(InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo);
+                            mUpdateStatus = UpdateStatus::SUCCESS;
+                            return 0;
+                            });
+                        });
                     MainWindow->GetPanel()->Add(nxt);
                 }
                 else
                 {
-
-
                     static std::shared_ptr<VinaProgress>notice = std::make_shared<VinaProgress>();
-                    notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40,30,50, RGB(65, 174, 134), L"正在更新...");
+
+                    switch (mUpdateStatus) {
+                    case UpdateStatus::ERR: {
+                        notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, DownloadProgress, RGB(220, 40, 35), L"发生错误");
+                        break;
+                    }
+                    case UpdateStatus::SUCCESS: {
+                        notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, DownloadProgress, RGB(35, 134, 54), L"完成！");
+                        break;
+                    }
+                    default: {
+                        notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, DownloadProgress, RGB(65, 174, 134), L"正在更新...");
+                        break;
+                    }
+                    }
+                    
                     MainWindow->GetPanel()->Add(notice);
 
                     static int ani = 0;
@@ -260,9 +321,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     double animove = CalcBezierCurve(ani, 0, 200, 100, .27, .04, .79, .98);
                     if (ani > 99)ani = 0;
 
-                    D2DDrawCircleArc(hrt, rc.right / gScale / 2 - 7, 120 + 160 - AnimateMove, 15, VERTEXUICOLOR_SEA, animove, 3);
+                    if (mUpdateStatus != UpdateStatus::SUCCESS && mUpdateStatus != UpdateStatus::ERR)
+                        D2DDrawCircleArc(hrt, rc.right / gScale / 2 - 7, 120 + 160 - AnimateMove, 15, VERTEXUICOLOR_SEA, animove, 3);
 
-                    D2DDrawText2(hrt, L"当前步骤...", -2, 120 + 200 - AnimateMove, rc.right / gScale, 20, 14, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, true);
+                    std::wstring stepmsg;
+                    switch (mUpdateStatus) {
+                    case UpdateStatus::PENDING: {
+                        stepmsg = L"等待中...";
+                        break;
+                    }
+                    case UpdateStatus::DOWNLOADING: {
+                        stepmsg = L"正在下载";
+                        break;
+                    }
+                    case UpdateStatus::REPLACING: {
+                        stepmsg = L"正在应用更新";
+                        break;
+                    }
+                    case UpdateStatus::SUCCESS: {
+                        stepmsg = L"完成！";
+                        break;
+                    }
+                    }
+                    D2DDrawText2(hrt, stepmsg.c_str(), -2, 120 + 200 - AnimateMove, rc.right / gScale, 20, 14, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, true);
                 }
             }
         }

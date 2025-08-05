@@ -3,6 +3,8 @@
 #include "resource.h"
 #include "LightFrame.Data.h"
 
+#include <TlHelp32.h>
+
 void SetDataBase()
 {
     wchar_t test[260] = L"";
@@ -48,4 +50,23 @@ std::string ws2s(const std::wstring& wstr) {
     std::string strTo(size_needed, 0);
     WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
     return strTo;
+}
+
+void WaitForLightFrameExit(std::wstring strFileName) {
+    HWND hWndLF = FindWindow(L"LIGHTFRAME", L"LightFrame");
+    PROCESSENTRY32  pe32;
+    HANDLE hSnaphot;
+    HANDLE hApp;
+    DWORD dProcess = 0;
+    hSnaphot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    Process32First(hSnaphot, &pe32);
+    do {
+        if (lstrcmpi(pe32.szExeFile, strFileName.c_str()) == 0) {
+            dProcess = pe32.th32ProcessID;
+            break;
+        }
+    } while (Process32Next(hSnaphot, &pe32));
+    hApp = OpenProcess(
+        PROCESS_VM_OPERATION | SYNCHRONIZE, FALSE, dProcess);
+    ::SendMessage(hWndLF, 0xff3, 0, 1);
 }
