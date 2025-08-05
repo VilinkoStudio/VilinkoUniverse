@@ -1326,9 +1326,9 @@ public:
 		RECT crc;
 
 		double progress = ((double)(cx - 20) * Value) / 100.0;
-		D2DDrawRoundRect(hdc, x + 10, y + 10, cx - 20, cy - 20, VuiFadeColor(Clr, 60), 8, 0.2f, 2, VuiFadeColor(Clr, 100), 0.6f);
+		D2DDrawRoundRect(hdc, x + 10, y + 10, cx - 20, cy - 20, VuiFadeColor(Clr, 60), 8, 0.2f, 1.2f, VuiFadeColor(Clr, 100), 0.6f);
 		D2DDrawRoundRect(hdc, x + 10, y + 10, progress, cy - 20, VuiFadeColor(Clr, 10), 8);
-		D2DDrawText2(hdc, this->txt.c_str(), x + 10, y + 12, cx - 20, cy - 20, 12, VuiFadeColor(Clr, 120), L"Segoe UI", 0.75f, true);
+		D2DDrawText2(hdc, this->txt.c_str(), x + 20, y + cy/2-9, cx - 20, cy - 20, 12, VuiFadeColor(Clr, 140), L"Segoe UI", 0.75f);
 	}
 
 	virtual int OnMouseUp()
