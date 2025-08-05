@@ -1305,3 +1305,91 @@ protected:
 	std::function<void()>func;
 	std::wstring text;
 };
+class VinaProgress : public VertexUIControl {
+public:
+	void Set(int x, int y, int cx, int cy, int Value = -1, unsigned long clr = VERTEXUICOLOR_DARKEN, const wchar_t* placeholder = L"")
+	{
+		this->txt = placeholder;
+		this->x = x - 10;
+		this->y = y - 10;
+		this->cx = cx + 20;
+		this->cy = cy + 20;
+		if (Value != -1)this->Value = Value;
+		this->Clr = clr;
+	}
+
+	virtual void CreateCtl(HWND hWnd, HRT hdc)
+	{
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+
+		RECT crc;
+
+		double progress = ((double)(cx - 20) * Value) / 100.0;
+		D2DDrawRoundRect(hdc, x + 10, y + 10, cx - 20, cy - 20, VuiFadeColor(Clr, 60), 8, 0.2f, 2, VuiFadeColor(Clr, 100), 0.6f);
+		D2DDrawRoundRect(hdc, x + 10, y + 10, progress, cy - 20, VuiFadeColor(Clr, 10), 8);
+		D2DDrawText2(hdc, this->txt.c_str(), x + 10, y + 12, cx - 20, cy - 20, 12, VuiFadeColor(Clr, 120), L"Segoe UI", 0.75f, true);
+	}
+
+	virtual int OnMouseUp()
+	{
+
+		Refresh(hWnd);
+		return 0;
+	}
+	virtual int OnMouseDown()
+	{
+		
+		Refresh(hWnd);
+		return 0;
+	}
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
+	{
+
+		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
+		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
+		if (eventtype == vinaEvent::mouseOver) {
+			if (this->OnEdit == false)return 0;
+			Refresh(hWnd);
+		}
+
+		return 0;
+	}
+	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaProgress> vuic)
+	{
+		this->hWnd = hWnd;
+		CreateCtl(hWnd, hdc);
+	}
+	virtual VertexUIPos GetCurrentRect() {
+		VertexUIPos _{ x,y,cx,cy };
+		return _;
+	}
+	void SetInternalEvent(std::wstring ev)
+	{
+		this->_event = ev;
+	}
+	int GetValue()
+	{
+		return Value;
+	}
+	void SetValue(int val)
+	{
+		this->Value = val;
+	}
+	std::wstring txt;
+	std::wstring c;
+	std::wstring _event = L"";
+	unsigned long Clr;
+
+	int id = -1;
+protected:
+	bool OnEdit = false;
+	int Value = 0;
+	HWND hWnd;
+	int ap = 0;
+	int flag = 0;
+	float txtsz = 15;
+	unsigned long txtClr;
+	std::function<void()>func;
+	std::wstring text;
+};

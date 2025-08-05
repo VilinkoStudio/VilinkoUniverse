@@ -246,8 +246,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 {
 
 
-                    static std::shared_ptr<VinaNotice>notice = std::make_shared<VinaNotice>();
-                    notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40, 30, L"正在更新...", RGB(65, 174, 134), 12);
+                    static std::shared_ptr<VinaProgress>notice = std::make_shared<VinaProgress>();
+                    notice->Set(20, 100 + 100 - AnimateMove, rc.right / gScale - 40,30,50, RGB(65, 174, 134), L"正在更新...");
                     MainWindow->GetPanel()->Add(notice);
 
                     static int ani = 0;
