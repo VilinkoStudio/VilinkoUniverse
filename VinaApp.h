@@ -60,6 +60,37 @@ std::string ws2s(const std::wstring& wstr) {
     return strTo;
 }
 
+std::wstring version2ws(int version) {
+    if (version < 0) {
+        return L"";
+    }
+
+    std::wstring str = std::to_wstring(version);
+    size_t len = str.length();
+    std::wstring result;
+
+    if (len == 1) {
+        result = L"0.0." + str;
+    }
+    else if (len == 2) {
+        result = L"0." + str.substr(0, 1) + L"." + str.substr(1, 1);
+    }
+    else if (len == 3) {
+
+        result = L"0." + str.substr(0, 1) + L"." + str.substr(1, 2);
+    }
+    else if (len == 4) {
+
+        result = str.substr(0, 1) + L"." + str.substr(1, 1) + L"." + str.substr(2, 2);
+    }
+    else if (len >= 5) {
+
+        result = str.substr(0, 2) + L"." + str.substr(2, len - 4) + L"." + str.substr(len - 2, 2);
+    }
+
+    return result;
+}
+
 void WaitForLightFrameExit(std::wstring strFileName) {
     HWND hWndLF = FindWindow(L"LIGHTFRAME", L"LightFrame");
     PROCESSENTRY32  pe32;

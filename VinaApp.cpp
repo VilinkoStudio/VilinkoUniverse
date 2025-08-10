@@ -51,18 +51,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Json::Value paramsRoot;
     Json::Reader jsonReader;
 
+    auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
 
+    const wchar_t* path = VUIGetObject(obj, "AppDir");
+    const wchar_t* date = VUIGetObject(obj, "BuildDate");
+    int lf_ver;
+    obj.get("version", lf_ver);
+    project[L"lightframe"].InstallPath = std::wstring(path);
+    project[L"lightframe"].BuildDate = std::wstring(date);
+    project[L"lightframe"].LatestVersion = version2ws(lf_ver);
     try {
         if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
             if (paramsRoot["project"].asString() == "lightframe" ) {
                 
 
-                auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
+             
 
-                const wchar_t* path = VUIGetObject(obj, "AppDir");
-                const wchar_t* date = VUIGetObject(obj, "BuildDate");
-                project[L"lightframe"].InstallPath = std::wstring(path);
-                project[L"lightframe"].BuildDate = std::wstring(date);
 
 
                 bParseSuccess = true;
@@ -146,8 +150,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         static double AnimateMove = 0;
 
         static bool isAbout = false;
-
-        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", L"Version:0.9.9", [hWnd] { Refresh(hWnd); }, [hWnd] {
+        std::wstring ul_ver = std::wstring(L"Version:") + project[L"lightframe"].LatestVersion;
+        CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", ul_ver.c_str(), [hWnd] {
+            PROCESS_INFORMATION ProInfo;
+        STARTUPINFO    StartInfo;
+        ZeroMemory(&StartInfo, sizeof(StartInfo));
+        CreateProcess(NULL, wstrcopy(project[L"lightframe"].InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo); Refresh(hWnd); 
+            }, [hWnd] {
             auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
 
             const wchar_t* path = VUIGetObject(obj, "AppDir");
