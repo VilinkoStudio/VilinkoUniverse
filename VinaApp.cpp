@@ -66,25 +66,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     try {
         if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
             if (paramsRoot["project"].asString() == "lightframe" ) {
-                
-
-             
-
-
-
                 bParseSuccess = true;
 
                 //InstallPath = paramsRoot["path"].asString();
 
-                httplib::SSLClient httpcli("api.vertillusion.com");
+                httplib::SSLClient httpcli("api.vilinko.com");
                 httplib::Params params;
                 httplib::Headers headers = {
                     { "Vilinko-Project", "LightFrame" }
                 };
                 Json::Value resultRoot;
-                params.emplace("build_date",WString2String( project[L"lightframe"].BuildDate));
+                params.emplace("build_date", ws2s(project[L"lightframe"].BuildDate));
+                params.emplace("project", "lightframe");
 
-                auto httpRes = httpcli.Get("/updater/check", params, headers);
+                auto httpRes = httpcli.Get("/universe/update", params, headers);
                 if (!httpRes ||
                     httpRes->status != httplib::StatusCode::OK_200 ||
                     !jsonReader.parse(httpRes->body, resultRoot) ||
