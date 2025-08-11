@@ -968,6 +968,27 @@ namespace VertexUI
 			return hico;
 
 		}
+
+		HICON GetFileIcon3(const wchar_t* pszPath)
+		{
+			SHFILEINFO sfi;
+			if (!SHGetFileInfo(pszPath, 0, &sfi, sizeof(sfi), SHGFI_SYSICONINDEX)) return NULL;
+
+			// 获取大号图像列表
+			IImageList* piml;
+
+			if (FAILED(SHGetImageList(SHIL_JUMBO, IID_PPV_ARGS(&piml)))) return NULL;
+
+			// 提取图标
+			HICON hico;
+			piml->GetIcon(sfi.iIcon, ILD_TRANSPARENT, &hico);
+
+			// 清理资源
+			piml->Release();
+
+			return hico;
+
+		}
 		void DisplayIcon(HDC hdc, const wchar_t* path, int x, int y, int sz)
 		{
 			//正式代码
@@ -1073,6 +1094,62 @@ namespace VertexUI
 
 			// 清理
 			DeleteObject(hBitmap);
+			DeleteDC(hdcMem);
+			ReleaseDC(nullptr, hdcScreen);
+
+			return pD2DBitmap;
+		}
+		template <typename T>
+		ID2D1Bitmap* D2DCreateIconBitmap(T* pRenderTarget, const wchar_t* path, int sz)
+		{
+			if (!pRenderTarget) return nullptr;
+
+			// 获取HICON
+
+			HICON hIcon;
+			if (sz > 128)
+			{
+				hIcon = GetFileIcon3(path);
+			}
+			else  hIcon = GetFileIcon2(path);
+			if (!hIcon) return nullptr;
+
+			// 创建32位DIB
+			HDC hdcScreen = GetDC(nullptr);
+			HDC hdcMem = CreateCompatibleDC(hdcScreen);
+
+			BITMAPINFO bmi = { 0 };
+			bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+			bmi.bmiHeader.biWidth = sz;
+			bmi.bmiHeader.biHeight = -sz;
+			bmi.bmiHeader.biPlanes = 1;
+			bmi.bmiHeader.biBitCount = 32;
+			bmi.bmiHeader.biCompression = BI_RGB;
+
+			BYTE* pBits = nullptr;
+			HBITMAP hBitmap = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, (void**)&pBits, nullptr, 0);
+
+			HGDIOBJ hOld = SelectObject(hdcMem, hBitmap);
+			DrawIconEx(hdcMem, 0, 0, hIcon, sz, sz, 0, nullptr, DI_NORMAL);
+			SelectObject(hdcMem, hOld);
+
+			// 创建D2D位图
+			D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
+				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
+			);
+
+			ID2D1Bitmap* pD2DBitmap = nullptr;
+			HRESULT hr = pRenderTarget->CreateBitmap(
+				D2D1::SizeU(sz, sz),
+				pBits,
+				sz * 4,
+				&props,
+				&pD2DBitmap
+			);
+
+			// 清理
+			DeleteObject(hBitmap);
+			DestroyIcon(hIcon);
 			DeleteDC(hdcMem);
 			ReleaseDC(nullptr, hdcScreen);
 

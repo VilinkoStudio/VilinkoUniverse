@@ -32,6 +32,7 @@ struct projectInfo {
     std::wstring BuildDate;
     std::wstring InstallPath;
     std::string DownloadURL;
+    ID2D1Bitmap* Icon=nullptr;
 };
 std::unordered_map< std::wstring,projectInfo>project;
 std::thread thUpdate;
@@ -46,6 +47,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
 
     SetDataBase();
+    InitGlobalD2D();
 
     bool bParseSuccess = false;
     Json::Value paramsRoot;
@@ -61,6 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     int lf_ver;
     obj.get("version", lf_ver);
     project[L"lightframe"].InstallPath = std::wstring(path);
+
     project[L"lightframe"].BuildDate = std::wstring(date);
     project[L"lightframe"].LatestVersion = version2ws(lf_ver);
     try {
@@ -121,7 +124,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AddFontResource(fntBase.c_str());
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_VINAAPP));
-    InitGlobalD2D();
+
+
     VuiColorSystemInit();
     gScale = GetScreenScale();
     //LoadVinaCom();
@@ -132,6 +136,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MainWindow->Set(100, 100, 720 * gScale, 480 * gScale, L"Vina.Class.App.Main", L"Vilinko Universe");
     MainWindow->CreatePanel([](HWND hWnd, ID2D1HwndRenderTarget* hrt)->void {
+
+      
+
         RECT rc;  
         GetClientRect(hWnd, &rc);
         D2DDrawSolidRect(hrt, 0, 0, rc.right, rc.bottom, VERTEXUICOLOR_MIDNIGHT);
@@ -149,6 +156,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         static bool isAbout = false;
         std::wstring ul_ver = std::wstring(L"Version:") + project[L"lightframe"].LatestVersion;
+        if (project[L"lightframe"].Icon == nullptr)
+        {
+            ID2D1Bitmap* bmplf = D2DCreateIconBitmap(hrt, project[L"lightframe"].InstallPath.c_str(), 256);
+            project[L"lightframe"].Icon = bmplf;
+        }
         CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", ul_ver.c_str(), [hWnd] {
             PROCESS_INFORMATION ProInfo;
         STARTUPINFO    StartInfo;
@@ -173,7 +185,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             XSleep(5);
             Refresh(hWnd);
         }
-            });
+            },project[L"lightframe"].Icon);
 
         for (auto i : btns)
         {
