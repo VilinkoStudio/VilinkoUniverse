@@ -55,6 +55,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     const wchar_t* path = VUIGetObject(obj, "AppDir");
     const wchar_t* date = VUIGetObject(obj, "BuildDate");
+    std::wstring strr = date;
+    replace_all(strr, L"%20", L" ");
+    date = strr.c_str();
     int lf_ver;
     obj.get("version", lf_ver);
     project[L"lightframe"].InstallPath = std::wstring(path);
@@ -161,6 +164,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
             const wchar_t* path = VUIGetObject(obj, "AppDir");
             const wchar_t* date = VUIGetObject(obj, "BuildDate");
+            std::wstring strr = date;
+            replace_all(strr, L"%20", L" ");
+            date = strr.c_str();
             project[L"lightframe"].InstallPath = std::wstring(path);
             project[L"lightframe"].BuildDate = std::wstring(date);
             
