@@ -103,8 +103,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    if (!lpCmdLine && !bParseSuccess)PostQuitMessage(0);
-
+    if (std::wstring(lpCmdLine).size() && !bParseSuccess)PostQuitMessage(0);
 
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
     HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
