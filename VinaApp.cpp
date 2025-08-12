@@ -36,9 +36,12 @@ struct projectInfo {
     std::wstring InstallPath;
     std::string DownloadURL;
     ID2D1Bitmap* Icon=nullptr;
+    bool HasUpdate;
 };
 std::unordered_map< std::wstring,projectInfo>project;
+std::thread thCheckUpdate;
 std::thread thUpdate;
+std::mutex mutexUpdateLocalData;
 UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
 
 bool CheckUpdate(Project proj) {
@@ -64,12 +67,15 @@ bool CheckUpdate(Project proj) {
             )
             return false;
 
+        std::lock_guard<std::mutex> lock(mutexUpdateLocalData);
         project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
         project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
         project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
+        project[L"lightframe"].HasUpdate = true;
         return true;
     }
     }
+    return false;
 }
 
 VinaWindow* MainWindow = new VinaWindow;
@@ -97,9 +103,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     int lf_ver;
     obj.get("version", lf_ver);
     project[L"lightframe"].InstallPath = std::wstring(path);
-
     project[L"lightframe"].BuildDate = std::wstring(date);
     project[L"lightframe"].LatestVersion = version2ws(lf_ver);
+    project[L"lightframe"].HasUpdate = false;
+
     try {
         if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
             if (paramsRoot["project"].asString() == "lightframe" ) {
@@ -116,7 +123,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    if (std::wstring(lpCmdLine).size() && !bParseSuccess)PostQuitMessage(0);
+    if (std::wstring(lpCmdLine).size() && !bParseSuccess)return 0;
+
+    if (!std::wstring(lpCmdLine).size()) {
+        thCheckUpdate = std::thread([&] {
+            CheckUpdate(Project::LIGHTFRAME);
+            });
+        thCheckUpdate.detach();
+    }
 
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
     HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
@@ -145,7 +159,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MainWindow->Set(100, 100, 720 * gScale, 480 * gScale, L"Vina.Class.App.Main", L"Vilinko Universe");
     MainWindow->CreatePanel([](HWND hWnd, ID2D1HwndRenderTarget* hrt)->void {
-
+        ClearVector(btns);
       
 
         RECT rc;  
@@ -232,7 +246,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             XSleep(5);
             Refresh(hWnd);
         }
-            },project[L"lightframe"].Icon);
+            },project[L"lightframe"].Icon, project[L"lightframe"].HasUpdate);
 
         for (auto i : btns)
         {
