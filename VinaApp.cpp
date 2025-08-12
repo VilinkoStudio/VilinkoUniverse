@@ -453,22 +453,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         more->Set(rc.right / gScale - 32 - 32 - 32 - 25, 20, L"test-more3", 15, VERTEXUICOLOR_WHITE, [hWnd] {isMenu = true; GlobalAnimationCount+=1; MainWindow->InitAnimation(); });
         MainWindow->GetPanel()->Add(more);
 
-        // 在你的窗口类中使用
-        std::shared_ptr<VinaLabel> label = std::make_shared<VinaLabel>();
-        label->Set(10, 150, 300, 200,
-            L"文本选择控件。\n"
-            L"ABCDEFG\n"
-            L"刘志\n"
-            L"12345678",
-            16, VERTEXUICOLOR_WHITE);
-        label->SelectAll();
-        MainWindow->GetPanel()->Add(label);
-
-        // 添加到界面
       
-
-        // 获取选中的文本
-        //std::wstring selectedText = selectableLabel->GetSelectedText();
 
         if (isMenu == true)
         {
