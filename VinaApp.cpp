@@ -31,6 +31,7 @@ HANDLE hMyFont;
 HGLOBAL hFntMem;
 struct projectInfo {
     std::wstring LatestVersion;
+    std::wstring LocalVersion;
     std::wstring ChangeLog;
     std::wstring BuildDate;
     std::wstring InstallPath;
@@ -104,7 +105,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     obj.get("version", lf_ver);
     project[L"lightframe"].InstallPath = std::wstring(path);
     project[L"lightframe"].BuildDate = std::wstring(date);
-    project[L"lightframe"].LatestVersion = version2ws(lf_ver);
+    project[L"lightframe"].LocalVersion = version2ws(lf_ver);
     project[L"lightframe"].HasUpdate = false;
 
     try {
@@ -178,7 +179,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         static double AnimateMove = 0;
 
         static bool isAbout = false;
-        std::wstring ul_ver = std::wstring(L"Version:") + project[L"lightframe"].LatestVersion;
+        std::wstring ul_ver = std::wstring(L"Version:") + project[L"lightframe"].LocalVersion;
         if (project[L"lightframe"].Icon == nullptr)
         {
             ID2D1Bitmap* bmplf = D2DCreateIconBitmap(hrt, project[L"lightframe"].InstallPath.c_str(), 256);
