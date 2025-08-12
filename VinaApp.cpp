@@ -128,7 +128,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     if (!std::wstring(lpCmdLine).size()) {
         thCheckUpdate = std::thread([&] {
-            CheckUpdate(Project::LIGHTFRAME);
+            if(CheckUpdate(Project::LIGHTFRAME))
+                ClearVector(btns);
             });
         thCheckUpdate.detach();
     }
@@ -160,7 +161,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MainWindow->Set(100, 100, 720 * gScale, 480 * gScale, L"Vina.Class.App.Main", L"Vilinko Universe");
     MainWindow->CreatePanel([](HWND hWnd, ID2D1HwndRenderTarget* hrt)->void {
-        ClearVector(btns);
 
 
         RECT rc;
