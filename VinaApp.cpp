@@ -191,54 +191,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             ZeroMemory(&StartInfo, sizeof(StartInfo));
             CreateProcess(NULL, wstrcopy(project[L"lightframe"].InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo); Refresh(hWnd);
             }, [hWnd] {
-                auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
-
-                const wchar_t* path = VUIGetObject(obj, "AppDir");
-                const wchar_t* date = VUIGetObject(obj, "BuildDate");
-                std::wstring strr = date;
-                replace_all(strr, L"%20", L" ");
-                date = strr.c_str();
-                project[L"lightframe"].InstallPath = std::wstring(path);
-                project[L"lightframe"].BuildDate = std::wstring(date);
-                Json::Value paramsRoot;
-                Json::Reader jsonReader;
-                try {
-                    if (jsonReader.parse(R"({"project":"lightframe"})", paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
-                        if (paramsRoot["project"].asString() == "lightframe") {
-
-                            //InstallPath = paramsRoot["path"].asString();
-
-                            httplib::SSLClient httpcli("api.vilinko.com");
-                            httplib::Params params;
-                            httplib::Headers headers = {
-                                { "Vilinko-Project", "LightFrame" }
-                            };
-                            Json::Value resultRoot;
-                            params.emplace("build_date", ws2s(project[L"lightframe"].BuildDate));
-                            params.emplace("project", "lightframe");
-
-                            auto httpRes = httpcli.Get("/universe/update", params, headers);
-                            if (!httpRes ||
-                                httpRes->status != httplib::StatusCode::OK_200 ||
-                                !jsonReader.parse(httpRes->body, resultRoot) ||
-                                !resultRoot.isMember("data") ||
-                                !resultRoot["data"].isMember("has_update") ||
-                                !resultRoot["data"]["has_update"].asBool()
-                                )
-                                return 0;
-
-                            project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
-                            project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
-                            project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
-
-                        }
-                    }
-                }
-                catch (Json::Exception e) {
-                    std::cerr << e.what() << std::endl;
-                    return 0;
-                }
-
                 IsCfg = true;
                 AnimateMove = 0;
                 for (int i = 0; i < 30; i += 1)
