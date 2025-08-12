@@ -21,6 +21,9 @@ short DownloadProgress;
 enum class UpdateStatus {
     PENDING, DOWNLOADING, REPLACING, SUCCESS, ERR
 };
+enum class Project {
+    LIGHTFRAME
+};
 
 // 全局变量:
 HINSTANCE hInst;                                // 当前实例
@@ -37,6 +40,37 @@ struct projectInfo {
 std::unordered_map< std::wstring,projectInfo>project;
 std::thread thUpdate;
 UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
+
+bool CheckUpdate(Project proj) {
+    switch (proj) {
+    case Project::LIGHTFRAME:{
+        httplib::SSLClient httpcli("api.vilinko.com");
+        httplib::Params params;
+        httplib::Headers headers = {
+            { "Vilinko-Project", "LightFrame" }
+        };
+        Json::Value resultRoot;
+        Json::Reader jsonReader;
+        params.emplace("build_date", ws2s(project[L"lightframe"].BuildDate));
+        params.emplace("project", "lightframe");
+
+        auto httpRes = httpcli.Get("/universe/update", params, headers);
+        if (!httpRes ||
+            httpRes->status != httplib::StatusCode::OK_200 ||
+            !jsonReader.parse(httpRes->body, resultRoot) ||
+            !resultRoot.isMember("data") ||
+            !resultRoot["data"].isMember("has_update") ||
+            !resultRoot["data"]["has_update"].asBool()
+            )
+            return false;
+
+        project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
+        project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+        project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
+        return true;
+    }
+    }
+}
 
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -71,33 +105,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             if (paramsRoot["project"].asString() == "lightframe" ) {
                 bParseSuccess = true;
 
-                //InstallPath = paramsRoot["path"].asString();
-
-                httplib::SSLClient httpcli("api.vilinko.com");
-                httplib::Params params;
-                httplib::Headers headers = {
-                    { "Vilinko-Project", "LightFrame" }
-                };
-                Json::Value resultRoot;
-                params.emplace("build_date", ws2s(project[L"lightframe"].BuildDate));
-                params.emplace("project", "lightframe");
-
-                auto httpRes = httpcli.Get("/universe/update", params, headers);
-                if (!httpRes ||
-                    httpRes->status != httplib::StatusCode::OK_200 ||
-                    !jsonReader.parse(httpRes->body, resultRoot) ||
-                    !resultRoot.isMember("data") ||
-                    !resultRoot["data"].isMember("has_update") ||
-                    !resultRoot["data"]["has_update"].asBool()
-                    )
-                    return 0;
-
-                project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
-                project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
-                project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
-
-                IsCfg = true;
-                UpdateMode = true;
+                if (CheckUpdate(Project::LIGHTFRAME))
+                    IsCfg = true, UpdateMode = true;
+                else return 0;
             }
         }
     }
@@ -106,8 +116,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    if (!lpCmdLine && !bParseSuccess)PostQuitMessage(0);
-
+    if (std::wstring(lpCmdLine).size() && !bParseSuccess)PostQuitMessage(0);
 
     hMyFont = INVALID_HANDLE_VALUE; // Here, we will (hopefully) get our font handle
     HRSRC  hFntRes = FindResource(hInstance, MAKEINTRESOURCE(IDF_FONTAWESOME), L"BINARY");
