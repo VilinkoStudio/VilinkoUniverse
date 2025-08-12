@@ -37,6 +37,7 @@ public:
 
 	virtual void CreateCtl(HWND hWnd, HRT hdc)
 	{
+		if (Isvalid == false)return;
 		RECT rc;
 		GetClientRect(hWnd, &rc);
 		if (this->IsPushed == true)
@@ -167,7 +168,10 @@ public:
 			D2DDrawText2(hdc, txt.c_str(), x,(float)(y+cy/2-txtsz/1.5), cx, cy, txtsz, txtClr,L"Segoe UI",1,true);
 		}
 	}
-
+	void SetValidity(bool v)
+	{
+		Isvalid = v;
+	}
 	virtual int OnMouseUp()
 	{
 		ap = 0;
@@ -185,7 +189,7 @@ public:
 	}
 	virtual int AddEvent(const vinaPoint& pt,vinaEvent eventtype)
 	{
-	
+		if (Isvalid == false)return 0;
 			if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
 			if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
 				
@@ -217,7 +221,7 @@ public:
 
 	int id = -1;
 protected:
-
+	bool Isvalid = true;
 	HWND hWnd;
 	int ap = 0;
 	int flag = 0;
@@ -1393,304 +1397,3 @@ protected:
 	std::function<void()>func;
 	std::wstring text;
 };
-class VinaLabel : public VertexUIControl {
-public:
-	void Set(int x, int y, int cx, int cy, const wchar_t* txt, int TxtSize = 15,
-		unsigned long TxtColor = VERTEXUICOLOR_WHITE, std::function<void()>events = [] {}) {
-		this->func = events;
-		this->txtsz = TxtSize;
-		this->Clr = TxtColor;
-		this->SetText(txt);
-		this->x = x;
-		this->y = y;
-		this->cx = cx;
-		this->cy = cy;
-		this->CalculateLineInfo();
-	}
-
-	void SetText(const wchar_t* txt) {
-		if (txt) {
-			this->text = txt;
-		}
-		else {
-			this->text = L"";
-		}
-		this->CalculateLineInfo();
-	}
-
-	virtual void CreateCtl(HWND hWnd, HRT hdc) {
-		this->hWnd = hWnd;
-		this->RenderText(hdc);
-	}
-	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaProgress> vuic)
-	{
-		this->hWnd = hWnd;
-		CreateCtl(hWnd, hdc);
-	}
-	virtual VertexUIPos GetCurrentRect() {
-		VertexUIPos _{ x,y,cx,cy };
-		return _;
-	}
-	virtual void RenderText(HRT hdc) {
-		if (text.empty() || !hdc) return;
-
-		// 创建文本格式
-		IDWriteTextFormat* pTextFormat = nullptr;
-		HRESULT hr = pDWriteFactory->CreateTextFormat(
-			L"Segoe UI",
-			NULL,
-			DWRITE_FONT_WEIGHT_NORMAL,
-			DWRITE_FONT_STYLE_NORMAL,
-			DWRITE_FONT_STRETCH_NORMAL,
-			(FLOAT)txtsz * gScale,
-			L"en-US",
-			&pTextFormat
-		);
-
-		if (SUCCEEDED(hr)) {
-			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-			pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
-
-			// 创建文本布局
-			IDWriteTextLayout* pTextLayout = nullptr;
-			hr = pDWriteFactory->CreateTextLayout(
-				text.c_str(),
-				(UINT32)text.length(),
-				pTextFormat,
-				(FLOAT)(cx - 20) * gScale,  // 宽度限制
-				(FLOAT)(cy - 20) * gScale,  // 高度限制
-				&pTextLayout
-			);
-
-			if (SUCCEEDED(hr)) {
-				// 设置文本颜色
-				ID2D1SolidColorBrush* pBrush = nullptr;
-				hdc->CreateSolidColorBrush(D2D1::ColorF(GetRValue(Clr) / 255.0f,
-					GetGValue(Clr) / 255.0f,
-					GetBValue(Clr) / 255.0f), &pBrush);
-
-				if (pBrush) {
-					// 绘制背景（如果需要选择高亮）
-					if (hasSelection) {
-						DrawSelectionBackground(hdc, pTextLayout);
-					}
-
-					// 绘制文本
-					D2D1_RECT_F layoutRect = D2D1::RectF(
-						(FLOAT)(x + 10) * gScale,
-						(FLOAT)(y + 10) * gScale,
-						(FLOAT)(x + cx - 10) * gScale,
-						(FLOAT)(y + cy - 10) * gScale
-					);
-
-					hdc->DrawTextLayout(D2D1::Point2F(layoutRect.left, layoutRect.top),
-						pTextLayout, pBrush);
-
-					// 绘制光标
-					if (showCursor && hasFocus) {
-						DrawCursor(hdc, pTextLayout);
-					}
-
-					pBrush->Release();
-				}
-
-				pTextLayout->Release();
-			}
-
-			pTextFormat->Release();
-		}
-	}
-
-	void DrawSelectionBackground(HRT hdc, IDWriteTextLayout* pTextLayout) {
-		if (selectionStart == selectionEnd) return;
-
-		UINT32 start = std::min(selectionStart, selectionEnd);
-		UINT32 end = std::max(selectionStart, selectionEnd);
-
-		DWRITE_HIT_TEST_METRICS hitTestMetrics;
-		FLOAT x, y;
-
-		// 获取选择起始位置坐标
-		pTextLayout->HitTestTextPosition(start, FALSE, &x, &y, &hitTestMetrics);
-
-		ID2D1SolidColorBrush* pSelectionBrush = nullptr;
-		hdc->CreateSolidColorBrush(D2D1::ColorF(0.2f, 0.4f, 0.8f, 0.3f), &pSelectionBrush);
-
-		if (pSelectionBrush) {
-			// 简化的选择背景绘制（实际应该按行绘制矩形）
-			D2D1_RECT_F selectionRect = D2D1::RectF(
-				x,
-				y,
-				x + 100, // 这里需要更精确的计算
-				y + hitTestMetrics.height
-			);
-			hdc->FillRectangle(selectionRect, pSelectionBrush);
-			pSelectionBrush->Release();
-		}
-	}
-
-	void DrawCursor(HRT hdc, IDWriteTextLayout* pTextLayout) {
-		DWRITE_HIT_TEST_METRICS hitTestMetrics;
-		FLOAT cursorX, cursorY;
-
-		pTextLayout->HitTestTextPosition(cursorPosition, FALSE, &cursorX, &cursorY, &hitTestMetrics);
-
-		ID2D1SolidColorBrush* pCursorBrush = nullptr;
-		hdc->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f), &pCursorBrush);
-
-		if (pCursorBrush) {
-			D2D1_RECT_F cursorRect = D2D1::RectF(
-				cursorX,
-				cursorY,
-				cursorX + 2.0f,
-				cursorY + hitTestMetrics.height
-			);
-			hdc->FillRectangle(cursorRect, pCursorBrush);
-			pCursorBrush->Release();
-		}
-	}
-
-	virtual int OnMouseUp() {
-		this->isMouseDown = false;
-		this->hasFocus = true;
-		UpdateCursorPosition();
-		Refresh(hWnd);
-		return 0;
-	}
-
-	virtual int OnMouseDown() {
-		this->isMouseDown = true;
-		this->hasFocus = true;
-		this->selectionStart = GetTextPositionFromPoint();
-		this->selectionEnd = this->selectionStart;
-		this->hasSelection = false;
-		UpdateCursorPosition();
-		Refresh(hWnd);
-		return 0;
-	}
-
-	virtual int OnMouseMove(const vinaPoint& pt) {
-		if (isMouseDown && hasFocus) {
-			UINT32 newEnd = GetTextPositionFromPoint();
-			if (newEnd != selectionEnd) {
-				selectionEnd = newEnd;
-				hasSelection = (selectionStart != selectionEnd);
-				Refresh(hWnd);
-			}
-		}
-		return 0;
-	}
-
-	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype) {
-		switch (eventtype) {
-		case vinaEvent::mouseUp:
-			return OnMouseUp();
-		case vinaEvent::mouseDown:
-			return OnMouseDown();
-		case vinaEvent::mouseOver:
-			if (isMouseDown) {
-				return OnMouseMove(pt);
-			}
-			break;
-		case vinaEvent::mouseUnfocus:
-			hasFocus = false;
-			Refresh(hWnd);
-			break;
-		}
-		return 0;
-	}
-
-	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaLabel> vuic) {
-		this->hWnd = hWnd;
-		CreateCtl(hWnd, hdc);
-	}
-
-	// 获取选择的文本
-	std::wstring GetSelectedText() {
-		if (!hasSelection || selectionStart == selectionEnd) {
-			return L"";
-		}
-
-		UINT32 start = std::min(selectionStart, selectionEnd);
-		UINT32 end = std::max(selectionStart, selectionEnd);
-
-		if (end <= text.length()) {
-			return text.substr(start, end - start);
-		}
-		return L"";
-	}
-
-	// 全选
-	void SelectAll() {
-		selectionStart = 0;
-		selectionEnd = (UINT32)text.length();
-		hasSelection = (selectionEnd > 0);
-		cursorPosition = selectionEnd;
-		Refresh(hWnd);
-	}
-
-	// 清除选择
-	void ClearSelection() {
-		selectionStart = selectionEnd = cursorPosition = 0;
-		hasSelection = false;
-		Refresh(hWnd);
-	}
-
-protected:
-	std::wstring text;
-	float txtsz = 15;
-	unsigned long Clr;
-	std::function<void()> func;
-	HWND hWnd;
-	bool isMouseDown = false;
-	bool hasFocus = false;
-	bool hasSelection = false;
-	bool showCursor = true;
-	UINT32 selectionStart = 0;
-	UINT32 selectionEnd = 0;
-	UINT32 cursorPosition = 0;
-
-	// 行信息结构
-	struct LineInfo {
-		UINT32 startChar;
-		UINT32 endChar;
-		FLOAT height;
-	};
-	std::vector<LineInfo> lineInfos;
-
-	void CalculateLineInfo() {
-		lineInfos.clear();
-		if (text.empty()) return;
-
-		// 这里应该使用 IDWriteTextLayout 来计算实际的行信息
-		// 简化实现：按换行符分割
-		UINT32 start = 0;
-		for (UINT32 i = 0; i <= text.length(); ++i) {
-			if (i == text.length() || text[i] == L'\n') {
-				LineInfo line;
-				line.startChar = start;
-				line.endChar = i;
-				line.height = txtsz * 1.2f; // 估算行高
-				lineInfos.push_back(line);
-				start = i + 1;
-			}
-		}
-	}
-
-	UINT32 GetTextPositionFromPoint() {
-		// 简化的点到文本位置转换
-		// 实际应该使用 IDWriteTextLayout::HitTestPoint
-		return (UINT32)text.length() / 2; // 示例返回中间位置
-	}
-
-	void UpdateCursorPosition() {
-		cursorPosition = selectionEnd;
-	}
-
-	void Refresh(HWND hWnd) {
-		InvalidateRect(hWnd, NULL, FALSE);
-	}
-};
-
-

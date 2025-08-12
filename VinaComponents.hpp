@@ -33,6 +33,7 @@ void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, 
     std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
 
 	test2->Set(ctl_x + ctl_w - 185, ctl_y + ctl_h - 40, 80, 25, L"更新",btn2, RGB(82, 121, 251), 12.5);
+	//test2->SetValidity(false);
 	if (btns.size() < order*2)btns.push_back(test2);
 
 	D2DDrawRoundRect(hrt, ctl_x + 16, ctl_y + 16, 46, 46, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));

@@ -462,7 +462,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         more->Set(rc.right / gScale - 32 - 32 - 32 - 25, 20, L"test-more3", 15, VERTEXUICOLOR_WHITE, [hWnd] {isMenu = true; GlobalAnimationCount+=1; MainWindow->InitAnimation(); });
         MainWindow->GetPanel()->Add(more);
 
-      
 
         if (isMenu == true)
         {
