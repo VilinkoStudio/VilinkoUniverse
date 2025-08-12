@@ -176,6 +176,44 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             date = strr.c_str();
             project[L"lightframe"].InstallPath = std::wstring(path);
             project[L"lightframe"].BuildDate = std::wstring(date);
+            Json::Value paramsRoot;
+            Json::Reader jsonReader;
+            try {
+                if (jsonReader.parse(R"({"project":"lightframe"})", paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
+                    if (paramsRoot["project"].asString() == "lightframe") {
+
+                        //InstallPath = paramsRoot["path"].asString();
+
+                        httplib::SSLClient httpcli("api.vilinko.com");
+                        httplib::Params params;
+                        httplib::Headers headers = {
+                            { "Vilinko-Project", "LightFrame" }
+                        };
+                        Json::Value resultRoot;
+                        params.emplace("build_date", ws2s(project[L"lightframe"].BuildDate));
+                        params.emplace("project", "lightframe");
+
+                        auto httpRes = httpcli.Get("/universe/update", params, headers);
+                        if (!httpRes ||
+                            httpRes->status != httplib::StatusCode::OK_200 ||
+                            !jsonReader.parse(httpRes->body, resultRoot) ||
+                            !resultRoot.isMember("data") ||
+                            !resultRoot["data"].isMember("has_update") ||
+                            !resultRoot["data"]["has_update"].asBool()
+                            )
+                            return 0;
+
+                        project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
+                        project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+                        project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
+
+                    }
+                }
+            }
+            catch (Json::Exception e) {
+                std::cerr << e.what() << std::endl;
+                return 0;
+            }
             
             IsCfg = true;
         AnimateMove = 0;
@@ -414,6 +452,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         static std::shared_ptr<VinaFAIcon>more = std::make_shared<VinaFAIcon>();
         more->Set(rc.right / gScale - 32 - 32 - 32 - 25, 20, L"test-more3", 15, VERTEXUICOLOR_WHITE, [hWnd] {isMenu = true; GlobalAnimationCount+=1; MainWindow->InitAnimation(); });
         MainWindow->GetPanel()->Add(more);
+
+        // 在你的窗口类中使用
+        std::shared_ptr<VinaLabel> label = std::make_shared<VinaLabel>();
+        label->Set(10, 150, 300, 200,
+            L"文本选择控件。\n"
+            L"ABCDEFG\n"
+            L"刘志\n"
+            L"12345678",
+            16, VERTEXUICOLOR_WHITE);
+        label->SelectAll();
+        MainWindow->GetPanel()->Add(label);
+
+        // 添加到界面
+      
+
+        // 获取选中的文本
+        //std::wstring selectedText = selectableLabel->GetSelectedText();
 
         if (isMenu == true)
         {
