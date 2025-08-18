@@ -18,16 +18,19 @@ Button{id("QwQ4"),x(100),y(380),cx(100),cy(100),text("层6")}
 
 )";
 std::vector<std::shared_ptr<VinaButton>>btns;
-void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, const wchar_t* version, std::function<void()> btn1, std::function<void()> btn2,ID2D1Bitmap* ico = nullptr,bool updateVisibility = false)
+void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, const wchar_t* version, std::function<void()> btn1, std::function<void()> btn2,ID2D1Bitmap* ico = nullptr,bool updateVisibility = false,bool needdld=false)
 {
 	RECT rc;
 	GetClientRect(Main->GetHandle(), &rc);
 	int ctl_h = 120;
 	int ctl_x = 20; int ctl_y = 60+(order-1)*(ctl_h+20); int ctl_w = rc.right / gScale - 40;
-	D2DDrawRoundRect(hrt, ctl_x, ctl_y, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+		D2DDrawRoundRect(hrt, ctl_x, ctl_y, ctl_w, ctl_h, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 1, 2, VERTEXUICOLOR_MIDNIGHTPLUS);
+
 
     std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
-		test1->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"启动", btn1, RGB(82, 121, 251), 12.5);
+	if (needdld == false) { test1->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"启动", btn1, RGB(82, 121, 251), 12.5); }
+	else { test1->Set(ctl_x + ctl_w - 95, ctl_y + ctl_h - 40, 80, 25, L"下载", btn1, RGB(82, 121, 251), 12.5); }
 		if (btns.size()<order*2-1)btns.push_back(test1);
 	//	Main->GetPanel()->Add(test1);
     std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
@@ -36,12 +39,22 @@ void CreatePanelInfoBox(VinaWindow* Main,HRT hrt,int order, const wchar_t* txt, 
 	test2->SetValidity(updateVisibility);
 	if (btns.size() < order*2)btns.push_back(test2);
 
-	D2DDrawRoundRect(hrt, ctl_x + 16, ctl_y + 16, 46, 46, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
-	D2DDrawBitmapFrompBm(hrt, ico, ctl_x + 15, ctl_y + 15, 48);
-	//SafeRelease(&ico);
 
-	D2DDrawText3(hrt, txt, ctl_x + 84, ctl_y + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
-	D2DDrawText(hrt, version, ctl_x + 15, ctl_y + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+	if (needdld == false)
+	{
+		D2DDrawRoundRect(hrt, ctl_x + 16, ctl_y + 16, 46, 46, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 30), 12, 1, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 30));
+		D2DDrawBitmapFrompBm(hrt, ico, ctl_x + 15, ctl_y + 15, 48);
+		//SafeRelease(&ico);
+
+		D2DDrawText3(hrt, txt, ctl_x + 84, ctl_y + 22, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
+		D2DDrawText(hrt, version, ctl_x + 15, ctl_y + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+
+	}
+	else
+	{
+		D2DDrawText3(hrt, txt, ctl_x + 15, ctl_y + 10, 220, 40, 20, VERTEXUICOLOR_WHITE, L"Segoe UI");
+		D2DDrawText(hrt, L"未安装", ctl_x + 15, ctl_y + ctl_h - 28, 120, 40, 12, VERTEXUICOLOR_WHITE, L"Segoe UI", 0.75f);
+	}
 }
 void DrawDisplayBox2(HRT hrt, unsigned long clr,int x,int y,int cx,int cy,const wchar_t* title,const wchar_t* des)
 {

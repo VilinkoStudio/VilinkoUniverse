@@ -1000,52 +1000,7 @@ namespace VertexUI
 				DrawIconEx(hdc, x, y, hIcon, sz, sz, 0, NULL, DI_NORMAL);
 			DestroyIcon(hIcon);
 		}
-		template <typename T>
-		void D2DDisplayIcon(T hdc, const wchar_t* path, int x, int y, int sz)
-		{
-			ID2D1Bitmap* pBitmap = NULL;
-			if (std::wstring(path) == L"NULL" || std::wstring(path) == L"" || std::wstring(path) == L" ")
-				return;
 
-			HICON hIcon = GetFileIcon(path, 1);
-			if (!hIcon) return;
-
-			ICONINFO iconInfo;
-			GetIconInfo(hIcon, &iconInfo);
-
-			// 获取图标的位图信息
-			BITMAP bm;
-			GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bm);
-
-			// 创建一个 D2D 位图
-			D2D1_SIZE_U size = D2D1::SizeU(bm.bmWidth, bm.bmHeight);
-			D2D1_BITMAP_PROPERTIES bitmapProps = D2D1::BitmapProperties(
-				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-
-			BYTE* pPixels = new BYTE[bm.bmWidthBytes * bm.bmHeight];
-			GetBitmapBits(iconInfo.hbmColor, bm.bmWidthBytes * bm.bmHeight, pPixels);
-
-			ID2D1Bitmap* d2dBitmap = nullptr;
-			hdc->CreateBitmap(size, pPixels, bm.bmWidthBytes, bitmapProps, &d2dBitmap);
-
-
-
-			// 绘制 D2D 位图
-			hdc->DrawBitmap(d2dBitmap, D2D1::RectF(x, y, x + sz, y + sz));
-
-			// 结束绘制
-			HRESULT hr = hdc->EndDraw();
-			if (FAILED(hr))
-			{
-				OutputDebugString(L"Failed to render icon.");
-			}
-
-			// 清理
-			delete[] pPixels;
-			d2dBitmap->Release();
-			DeleteObject(iconInfo.hbmColor);
-			DeleteObject(iconInfo.hbmMask);
-		}
 		ID2D1Bitmap* CreateIconBitmap(ID2D1RenderTarget* pRenderTarget, const wchar_t* path, int sz)
 		{
 			if (!pRenderTarget) return nullptr;
@@ -1289,6 +1244,13 @@ namespace VertexUI
 
 			// 清理
 			d2dBitmap->Release();
+		}
+		template <typename T>
+		void D2DDisplayIcon(T hdc, const wchar_t* path, int x, int y, int sz)
+		{
+			ID2D1Bitmap* BMP = D2DCreateIconBitmap(hdc, path, sz);
+			D2DDrawBitmapFrompBm(hdc, BMP, x, y, sz);
+			SafeRelease(&BMP);
 		}
 		void CreatehIcon(HDC hdc, HICON hIcon, int x, int y, int sz)
 		{

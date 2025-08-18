@@ -12,6 +12,7 @@
 #include "VertexUI/VertexUI.min.h"
 #include "MainUI.hpp"
 
+#define VERSION_STR L"v0.1.0"
 VertexUIInit;
 #define MAX_LOADSTRING 100
 
@@ -36,6 +37,7 @@ struct projectInfo {
     std::wstring BuildDate;
     std::wstring InstallPath;
     std::string DownloadURL;
+    bool needToDownload = false;
     ID2D1Bitmap* Icon = nullptr;
     bool HasUpdate;
 };
@@ -44,6 +46,8 @@ std::thread thCheckUpdate;
 std::thread thUpdate;
 std::mutex mutexUpdateLocalData;
 UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
+
+
 
 bool CheckUpdate(Project proj) {
     switch (proj) {
@@ -70,7 +74,7 @@ bool CheckUpdate(Project proj) {
 
         std::lock_guard<std::mutex> lock(mutexUpdateLocalData);
         project[L"lightframe"].LatestVersion = s2ws(resultRoot["data"]["version"].asString());
-        project[L"lightframe"].ChangeLog = s2ws(resultRoot["data"]["changelog"].asString());
+        project[L"lightframe"].ChangeLog = s2wsu8(resultRoot["data"]["changelog"].asString());
         project[L"lightframe"].DownloadURL = resultRoot["data"]["download_url"].asString();
         project[L"lightframe"].HasUpdate = true;
         return true;
@@ -78,7 +82,32 @@ bool CheckUpdate(Project proj) {
     }
     return false;
 }
+void CheckLightFrame()
+{
+    project[L"lightframe"].needToDownload = false;
+    if (_waccess(LocalLFCache, 0) != -1) {
+        auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
 
+        const wchar_t* path = VUIGetObject(obj, "AppDir");
+        const wchar_t* date = VUIGetObject(obj, "BuildDate");
+        if (wcslen(VUIGetObject(obj, "BuildDate")) < 2) {
+            project[L"lightframe"].needToDownload = true;
+        }
+        std::wstring strr = date;
+        replace_all(strr, L"%20", L" ");
+        date = strr.c_str();
+        int lf_ver;
+        obj.get("version", lf_ver);
+        project[L"lightframe"].InstallPath = std::wstring(path);
+        project[L"lightframe"].BuildDate = std::wstring(date);
+        project[L"lightframe"].LocalVersion = version2ws(lf_ver);
+        project[L"lightframe"].HasUpdate = false;
+    }
+    else
+    {
+        project[L"lightframe"].needToDownload = true;
+    }
+}
 VinaWindow* MainWindow = new VinaWindow;
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -93,21 +122,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     bool bParseSuccess = false;
     Json::Value paramsRoot;
     Json::Reader jsonReader;
-
-    auto obj = vui::parser::fparser(LocalLFCacheA, "Main");
-
-    const wchar_t* path = VUIGetObject(obj, "AppDir");
-    const wchar_t* date = VUIGetObject(obj, "BuildDate");
-    std::wstring strr = date;
-    replace_all(strr, L"%20", L" ");
-    date = strr.c_str();
-    int lf_ver;
-    obj.get("version", lf_ver);
-    project[L"lightframe"].InstallPath = std::wstring(path);
-    project[L"lightframe"].BuildDate = std::wstring(date);
-    project[L"lightframe"].LocalVersion = version2ws(lf_ver);
-    project[L"lightframe"].HasUpdate = false;
-
+    CheckLightFrame();
     try {
         if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
             if (paramsRoot["project"].asString() == "lightframe") {
@@ -179,6 +194,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         static double AnimateMove = 0;
 
         static bool isAbout = false;
+        static bool isVersionPage = false;
+        static bool isSelect = false;
         std::wstring ul_ver = std::wstring(L"Version:") + project[L"lightframe"].LocalVersion;
         if (project[L"lightframe"].Icon == nullptr)
         {
@@ -186,10 +203,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             project[L"lightframe"].Icon = bmplf;
         }
         CreatePanelInfoBox(MainWindow, hrt, 1, L"轻框LightFrame", ul_ver.c_str(), [hWnd] {
-            PROCESS_INFORMATION ProInfo;
-            STARTUPINFO    StartInfo;
-            ZeroMemory(&StartInfo, sizeof(StartInfo));
-            CreateProcess(NULL, wstrcopy(project[L"lightframe"].InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo); Refresh(hWnd);
+            if (project[L"lightframe"].needToDownload == false)
+            {
+                PROCESS_INFORMATION ProInfo;
+                STARTUPINFO    StartInfo;
+                ZeroMemory(&StartInfo, sizeof(StartInfo));
+                CreateProcess(NULL, wstrcopy(project[L"lightframe"].InstallPath), NULL, NULL, FALSE, 0, NULL, NULL, &StartInfo, &ProInfo); Refresh(hWnd);
+            }
+            else { IsCfg = true; isSelect = true; AnimateMove = 0;
+            for (int i = 0; i < 30; i += 1)
+            {
+                AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
+                XSleep(5);
+                Refresh(hWnd);
+            } Refresh(hWnd); }
             }, [hWnd] {
                 IsCfg = true;
                 AnimateMove = 0;
@@ -199,7 +226,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     XSleep(5);
                     Refresh(hWnd);
                 }
-                }, project[L"lightframe"].Icon, project[L"lightframe"].HasUpdate);
+                }, project[L"lightframe"].Icon, project[L"lightframe"].HasUpdate, project[L"lightframe"].needToDownload);
 
             for (auto i : btns)
             {
@@ -239,13 +266,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                             });
 
                     }
+                    if (isVersionPage == true)
+                    {
+                        D2DDrawSolidRect(hrt, 0, 100 - AnimateMove, rc.right / gScale, rc.bottom / gScale, VERTEXUICOLOR_MIDNIGHT, 0.5);
+                    }
                 }
                 static std::shared_ptr<VinaBarrier>layer = std::make_shared<VinaBarrier>();
                 layer->Set(0, 40, rc.right / gScale, rc.bottom / gScale);
                 MainWindow->GetPanel()->Add(layer);
 
                 static std::shared_ptr<VinaFAIcon>bk = std::make_shared<VinaFAIcon>();
-                bk->Set(20, 60 + 100 - AnimateMove, L"test-left", 22, VERTEXUICOLOR_WHITE, [hWnd] {AnimateMove = 0;
+                bk->Set(20, 60 + 100 - AnimateMove, L"test-left", 22, VERTEXUICOLOR_WHITE, [hWnd] {
+                    CheckLightFrame();
+                    AnimateMove = 0;
                 for (int i = 0; i < 30; i += 1)
                 {
 
@@ -253,7 +286,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     XSleep(5);
                     Refresh(hWnd);
                     MainWindow->KillAnimation();
-                } IsCfg = false; isAbout = false; Refresh(hWnd); ExtraMsg = true; });
+                } IsCfg = false; isAbout = false;  isSelect =false ; Refresh(hWnd); ExtraMsg = true; });
                 MainWindow->GetPanel()->Add(bk);
 
 
@@ -273,7 +306,65 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 {
                     DrawDisplayBox2(hrt, RGB(163, 139, 251), 25, 105 + 100 - AnimateMove, 300, GetMinValue(GetMaxValue(AnimateMove * 2, 220), 1), L"沫海CimiMoly", L"\"星河如沫，映入澄曈\"\n去海岸 望星河 永远向圆满。");
                     DrawDisplayBox2(hrt, RGB(240, 141, 56), 25 + 25 + 300, 105 + 100 - AnimateMove, 300, GetMinValue(GetMaxValue(AnimateMove * 2, 220), 1), L"悠笙iYoRoy", L"「愿世间万物都能被温柔以待。」");
-                    D2DDrawText(hrt, L"( 以上是参加 Vilinko Universe 的开发者。其他项目请参考相关\"关于\"页面。)\nCopyright © 2025 Vilinko Studio  |  感谢每一个为项目贡献的小伙伴！", 25, 330, rc.right / gScale, 24, GetMinValue(GetMaxValue(AnimateMove / 5, 16), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+                    D2DDrawText(hrt, L"( 以上是参加 Vilinko Universe 的开发者。其他项目请参考相关\"关于\"页面。)\nCopyright © 2025 Vilinko Studio  |  感谢每一个为项目贡献的小伙伴！\n\nFramework by EnderMo(CimiMoly)/VinaUI\n\n其他开源项目引用:cpp-httplib | openssl | jsoncpp", 25, 330, rc.right / gScale, 24, GetMinValue(GetMaxValue(AnimateMove / 5, 16), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+                }
+                else if (isVersionPage == true)
+                {
+                    TCHAR strExeFullDir[MAX_PATH];
+
+                    GetModuleFileName(NULL, strExeFullDir, MAX_PATH);
+                    TCHAR strExeFullDir2[MAX_PATH];
+
+                    GetModuleFileName(NULL, strExeFullDir2, MAX_PATH);
+                    std::filesystem::path exePath(strExeFullDir2);
+                    std::filesystem::path dirPath = exePath.parent_path();
+                    ID2D1Bitmap* bm = D2DCreateIconBitmap(hrt, strExeFullDir, 256);
+
+                    D2DDrawBitmapFrompBm(hrt, bm, 425, 100 + 100 - AnimateMove, GetMinValue(GetMaxValue(AnimateMove / 1.2, 80),1));
+                    SafeRelease(&bm);
+                    D2DDrawText3(hrt,std::wstring(L"VILINKO UNIVERSE BETA\n"+ std::wstring(VERSION_STR)).c_str(), 25, 100 + 100 - AnimateMove, rc.right / gScale, 30, GetMinValue(GetMaxValue(AnimateMove / 3, 32), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+                    D2DDrawText(hrt, L"当前不支持自动更新。请从项目页面获取新版本并下载，感谢理解。", 25, 210 + 100 - AnimateMove, rc.right / gScale, 30, GetMinValue(GetMaxValue(AnimateMove / 3, 16), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+
+                    static std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
+
+                    test2->Set(25, 280 +100 - AnimateMove,80, 25, L"下载", [hWnd]{	ShellExecute(hWnd, L"open", L"https://docs.vilinko.com/docs/universe/", 0, 0, SW_SHOW); }, RGB(82, 121, 251), 12.5);
+
+                    MainWindow->GetPanel()->Add(test2);
+
+                    static std::shared_ptr<VinaButton>test3 = std::make_shared<VinaButton>();
+
+                    test3->Set(130, 280+ 100 - AnimateMove, 80, 25, L"安装路径", [hWnd,dirPath] {	ShellExecute(hWnd, L"open",dirPath.c_str(), 0, 0, SW_SHOW); }, RGB(82, 121, 251), 12.5);
+
+                    MainWindow->GetPanel()->Add(test3);
+                }
+                else if (isSelect == true)
+                {
+                    D2DDrawText3(hrt, L"选择下载目录", rc.right / gScale / 2 - 600 / 2, 55 + 100 - AnimateMove,200,40,20, VERTEXUICOLOR_WHITE);
+                    static auto fslt = std::make_shared<VinaFileSelector>();
+                    fslt->Set(rc.right/gScale/2-600/2,100+ 100 - AnimateMove, 600, 300);
+                    fslt->SetParent(MainWindow->GetPanel());
+                    fslt->SetFileOpenCallback([](const std::wstring& file) {
+                        //MessageBoxW(NULL, file.c_str(), L"QwQ", MB_OK);
+                        });
+
+                    fslt->SetPathDebugCallback([](const std::wstring& path) {
+
+                        OutputDebugStringW((path + L"\n").c_str());
+                        project[L"lightframe"].InstallPath = path+L"LightFrame.exe";
+                        });
+                    MainWindow->GetPanel()->Add(fslt);
+
+                    static std::shared_ptr<VinaFAIcon>nxt = std::make_shared<VinaFAIcon>();
+
+                    nxt->Set(rc.right / gScale  - 125, 160 + 360 - AnimateMove, 65, L"test-right-dld", 22, VERTEXUICOLOR_WHITE, [hWnd] {
+                        isSelect = false;
+                        project[L"lightframe"].BuildDate= L"Jun 1 2023";
+                        CheckUpdate(Project::LIGHTFRAME);
+                        Refresh(hWnd);
+                        return 0;
+                            
+                        });
+                    MainWindow->GetPanel()->Add(nxt);
                 }
                 else
                 {
@@ -430,6 +521,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             MainWindow->GetPanel()->Add(more);
 
 
+
+
+
+
             if (isMenu == true)
             {
                 static int ani = 0;
@@ -445,12 +540,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 MainWindow->GetPanel()->Add(layer);
 
                 CompGdiD2D(hWnd, hrt, [rc](HWND h, HDC hrt)->void {
-                    AreaBlur3(hrt, { (int)(rc.right - (32 + 32 + 32 + 25) * gScale),(int)(25 * gScale),(int)((animove / 1.1) * gScale),(int)((animove / 3.2) * gScale) }, 3, 2, 0);
+                    AreaBlur3(hrt, { (int)(rc.right - (32 + 32 + 32 + 25) * gScale),(int)(25 * gScale),(int)((animove / 1.1) * gScale),(int)((animove / 1.8) * gScale) }, 3, 2, 0);
                     });
-                D2DDrawRoundRect(hrt, rc.right / gScale - (32 + 32 + 32 + 25) - 1, 23, (animove / 1.1) + 2, animove / 3.2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 0.75, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 20));
+                D2DDrawRoundRect(hrt, rc.right / gScale - (32 + 32 + 32 + 25) - 1, 23, (animove / 1.1) + 2, animove / 1.8, VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, 10), 12, 0.75, 2, VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 20));
+
 
                 static std::shared_ptr<VinaButton>test1 = std::make_shared<VinaButton>();
-                test1->Set(rc.right / gScale - (32 + 32 + 32 + 25) + 6, 23 + 6, (animove / 1.1) - 12, animove / 5, L"关于", [hWnd] {
+                test1->Set(rc.right / gScale - (32 + 32 + 32 + 25) + 6, 23 + 6+23+6, (animove / 1.1) - 12, animove / 5, L"关于", [hWnd] {
                     isMenu = false; ani = 0;
                     IsCfg = true;
                     isAbout = true;
@@ -464,6 +560,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                     }, VERTEXUICOLOR_MIDNIGHTPLUS, GetMinValue2(GetMaxValue2(animove / 6, 12.5), 2));
                 MainWindow->GetPanel()->Add(test1);
+
+                static std::shared_ptr<VinaButton>ver = std::make_shared<VinaButton>();
+                ver->Set(rc.right / gScale - (32 + 32 + 32 + 25) + 6, 23 + 6, (animove / 1.1) - 12, animove / 5, L"更新", [hWnd] {
+                    isMenu = false; ani = 0;
+                    IsCfg = true;
+                    isVersionPage = true;
+                    AnimateMove = 0;
+                    for (int i = 0; i < 30; i += 1)
+                    {
+                        AnimateMove = CalcBezierCurve(i, 0, 100, 30, .17, .67, .57, 1.29);
+                        XSleep(5);
+                        Refresh(hWnd);
+                    }
+
+                    }, VERTEXUICOLOR_MIDNIGHTPLUS, GetMinValue2(GetMaxValue2(animove / 6, 12.5), 2));
+                MainWindow->GetPanel()->Add(ver);
             }
         });
 

@@ -33,6 +33,15 @@ wchar_t* s2ws(std::string str)
 	wchar_t* const ret = buf;
 	return ret;
 }
+wchar_t* s2wsu8(std::string str)
+{
+	int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.size(), nullptr, 0);
+	wchar_t* buf = new wchar_t[len + 1];
+	MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.size(), buf, len);
+	buf[len] = '\0';
+	wchar_t* const ret = buf;
+	return ret;
+}
 wchar_t* wstrcopy(std::wstring str)
 {
 	int len = str.size();

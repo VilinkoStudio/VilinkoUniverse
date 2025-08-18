@@ -24,6 +24,7 @@
     <ProjectGuid>{c83e19ca-c89b-4f5b-bd51-68b981a919a6}</ProjectGuid>
     <RootNamespace>VinaApp</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>VilinkoUniverse</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

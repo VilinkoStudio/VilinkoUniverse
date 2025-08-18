@@ -576,6 +576,7 @@ public:
 	{
 		if (from == std::wstring(L"test-right"))return std::wstring(L"\uf178");
 		if (from == std::wstring(L"test-right-upd"))return std::wstring(L"\uf178");
+		if (from == std::wstring(L"test-right-dld"))return std::wstring(L"\uf178");
 		if (from == std::wstring(L"win-close"))return std::wstring(L"\uf00d");
 		if (from == std::wstring(L"win-max"))return std::wstring(L"\uf065");
 		if (from == std::wstring(L"win-winmax"))return std::wstring(L"\uf424");
@@ -657,6 +658,11 @@ public:
 				D2DDrawText3(hdc, L"现在更新", x-5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-4, nClr, L"Segoe UI", 1);
 				D2DDrawText(hdc, newStr.c_str(), x+cx-txtsz + num * 3, (float)(y+1 + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 			}
+			else if (txt == std::wstring(L"test-right-dld"))
+			{
+				D2DDrawText3(hdc, L"下载", x - 5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz - 4, nClr, L"Segoe UI", 1);
+				D2DDrawText(hdc, newStr.c_str(), x + cx - txtsz + num * 3, (float)(y + 1 + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
 			else D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 		}
 		else
@@ -702,6 +708,11 @@ public:
 			{
 				D2DDrawText3(hdc, L"现在更新", x-5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz-4, nClr, L"Segoe UI", 1);
 				D2DDrawText(hdc, newStr.c_str(), x + cx - txtsz + num * 3, (float)(y +1+ cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
+			}
+			else if (txt == std::wstring(L"test-right-dld"))
+			{
+				D2DDrawText3(hdc, L"下载", x - 5 + num * 3, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz - 4, nClr, L"Segoe UI", 1);
+				D2DDrawText(hdc, newStr.c_str(), x + cx - txtsz + num * 3, (float)(y + 1 + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 			}
 			else D2DDrawText(hdc, newStr.c_str(), x, (float)(y + cy / 2 - txtsz / 1.5), cx, cy, txtsz, nClr, L"Font Awesome 6 Free Solid", 1);
 
@@ -1349,7 +1360,6 @@ public:
 	}
 	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype)
 	{
-
 		if (eventtype == vinaEvent::mouseUp)this->OnMouseUp();
 		if (eventtype == vinaEvent::mouseDown)this->OnMouseDown();
 		if (eventtype == vinaEvent::mouseOver) {
@@ -1396,4 +1406,574 @@ protected:
 	unsigned long txtClr;
 	std::function<void()>func;
 	std::wstring text;
+};
+class VinaFileSelector : public VertexUIControl {
+public:
+	struct FileInfo {
+		std::wstring name;
+		std::wstring path;
+		bool isDirectory;
+		std::wstring iconPath;
+		int x, y, cx, cy; 
+		bool useIconText; 
+		int ap = 0; 
+		int flag = 0; 
+	};
+
+	enum class ViewMode {
+		DriveSelection, 
+		FileBrowser    
+	};
+
+	bool evercreated = false;
+	ViewMode currentMode = ViewMode::DriveSelection;
+
+	void Set(int x, int y, int cx, int cy, unsigned long bgColor = VERTEXUICOLOR_MIDNIGHT) {
+		this->x = x;
+		this->y = y;
+		this->cx = cx;
+		this->cy = cy;
+		this->bgColor = bgColor;
+		this->itemHeight = 30;
+
+		if (evercreated == false) {
+			this->hoveredIndex = -1;
+			this->selectedIndex = -1;
+			this->scrollOffset = 0;
+			currentMode = ViewMode::DriveSelection;
+			currentPath = L"";
+			RefreshFileList();
+		}
+		evercreated = true;
+	}
+
+	virtual void CreateCtl(HWND hWnd, HRT hdc) {
+		if (!Isvalid) return;
+		scrollOffset += this->GetParent()->GetInstantScrollDepth() / 6;
+		scrollOffset = GetMinValue(scrollOffset, 0);
+	
+		D2DDrawRoundRect(hdc, x, y, cx, cy, bgColor, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+		DrawPathBar(hWnd, hdc);
+
+		DrawFileList(hWnd, hdc);
+
+		DrawScrollBar(hWnd, hdc);
+
+	}
+
+	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype) override {
+		if (!Isvalid) return 0;
+
+		if (eventtype == vinaEvent::mouseDown) {
+			HandleMouseDown(pt);
+			Refresh(hWnd);
+		}
+		if (eventtype == vinaEvent::mouseUp) {
+			HandleMouseUp(pt);
+			Refresh(hWnd);
+		}
+		if (eventtype == vinaEvent::mouseOver) {
+			this->IsHoverd = true;
+			HandleMouseMove(pt);
+			Refresh(hWnd);
+		}
+		else {
+			this->IsHoverd = false;
+			hoveredIndex = -1;
+		}
+
+		return 0;
+	}
+
+	virtual void CreateInheritedCtl(HWND hWnd, HRT hdc, std::shared_ptr<VinaFileSelector> vuic) {
+		this->hWnd = hWnd;
+		CreateCtl(hWnd, hdc);
+	}
+
+	virtual VertexUIPos GetCurrentRect() override {
+		VertexUIPos pos{ x, y, cx, cy };
+		return pos;
+	}
+
+	void SetFileOpenCallback(std::function<void(const std::wstring&)> callback) {
+		fileSelectedCallback = callback;
+	}
+
+
+	void SetPathDebugCallback(std::function<void(const std::wstring&)> callback) {
+		pathChangedCallback = callback;
+	}
+
+private:
+	void DrawPathBar(HWND hWnd, HRT hdc) {
+
+		D2DDrawRoundRect(hdc, x + 5, y + 5, cx - 10, 30, VuiFadeColor(bgColor, 20), 6, 1, 1.5f, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+
+		std::wstring pathText;
+		if (currentMode == ViewMode::DriveSelection) {
+			pathText = L"计算机";
+		}
+		else {
+			pathText = currentPath.empty() ? L"计算机" : currentPath;
+		}
+
+
+		D2DDrawText2(hdc, pathText.c_str(), x + 15, y + 12, cx - 20, 20, 14, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
+	}
+
+	void DrawFileList(HWND hWnd, HRT hdc) {
+
+		int maxScrollOffset = std::max(0, (int)fileList.size() - (cy - 50) / itemHeight);
+		scrollOffset = std::max(0, std::min(scrollOffset, maxScrollOffset));
+
+		int startY = y + 40;
+		int visibleItems = (cy - 50) / itemHeight;
+		int startIndex = scrollOffset;
+		int endIndex = std::min(startIndex + visibleItems + 1, (int)fileList.size());
+
+		for (int i = startIndex; i < endIndex; i++) {
+			int itemY = startY + (i - startIndex) * itemHeight;
+
+			fileList[i].x = x + 5;
+			fileList[i].y = itemY;
+			fileList[i].cx = cx - 30;
+			fileList[i].cy = itemHeight - 2;
+
+
+			if (itemY + itemHeight < y + 40 || itemY > y + cy - 10) continue;
+
+
+			
+			HandleItemAnimationInCreate(i);
+
+		
+			DrawItemBackground(hdc, i, x + 5, itemY, cx - 30, itemHeight - 2);
+
+	
+			if (!fileList[i].useIconText) {
+				D2DDisplayIcon(hdc, fileList[i].path.c_str(), x + 10, itemY + 5, 20);
+			}
+
+			if (fileList[i].useIconText) {
+				unsigned long txtClr = VERTEXUICOLOR_WHITE;
+				
+				D2DDrawText(hdc, L"\uf060", x + 15, itemY + 7, cx - 50, itemHeight - 4, 15, txtClr, L"Font Awesome 6 Free Solid", 1);
+			
+				std::wstring displayName = GetParentFolderName(fileList[i].name);
+				D2DDrawText2(hdc, displayName.c_str(), x + 35, itemY + 8, cx - 50, itemHeight - 4,
+					13, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
+			}
+			else {
+			
+				D2DDrawText2(hdc, fileList[i].name.c_str(), x + 35, itemY + 8, cx - 50, itemHeight - 4,
+					13, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
+			}
+		}
+	}
+
+	void HandleItemAnimationInCreate(int index) {
+		FileInfo& file = fileList[index];
+
+	
+		bool isHovered = (index == hoveredIndex);
+
+		if (isHovered) {
+			// 悬停
+			if (file.flag == 0) {
+				//GlobalAnimationCount++;
+				file.flag = 1;
+			}
+			if (file.ap < 10) {
+				file.ap++;
+			}
+			if (file.ap >= 10) {
+				file.flag = 0;
+			}
+		}
+		else {
+			
+			if (file.flag == 0) {
+				//GlobalAnimationCount++;
+				file.flag = 1;
+			}
+			if (file.ap > 0) {
+				file.ap--;
+			}
+			if (file.ap == 0) {
+				file.flag = 0;
+				//GlobalAnimationCount--;
+			}
+		}
+	}
+
+	void DrawItemBackground(HRT hdc, int index, int x, int y, int cx, int cy) {
+		FileInfo& file = fileList[index];
+
+
+		float num = 0;
+		if (file.ap > 0) {
+			num = CalcEaseOutCurve(file.ap, 0, 0.5, 10);
+		}
+
+		unsigned long bgColor;
+		unsigned long borderColor = VERTEXUICOLOR_MIDNIGHTPLUS;
+
+		if (index == selectedIndex) {
+	
+			bgColor = VERTEXUICOLOR_SEA;
+		
+			if (num > 0) {
+				int nR = GetMaxValue(GetRValue(bgColor) + (int)(num * 20), 255);
+				int nG = GetMaxValue(GetGValue(bgColor) + (int)(num * 20), 255);
+				int nB = GetMaxValue(GetBValue(bgColor) + (int)(num * 20), 255);
+				bgColor = RGB(nR, nG, nB);
+			}
+			D2DDrawRoundRect(hdc, x + num, y + num, cx - num * 2, cy - num * 2, bgColor, 4, 1, 1.0f, borderColor);
+		}
+		else if (file.ap > 0 || index == hoveredIndex) {
+			
+			int alpha = (int)(30 * (file.ap / 10.0f));
+			bgColor = VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, alpha);
+
+		
+			int nR = GetMaxValue(GetRValue(bgColor) + (int)(num * 15), 255);
+			int nG = GetMaxValue(GetGValue(bgColor) + (int)(num * 15), 255);
+			int nB = GetMaxValue(GetBValue(bgColor) + (int)(num * 15), 255);
+			bgColor = RGB(nR, nG, nB);
+
+			D2DDrawRoundRect(hdc, x - num, y - num, cx + num * 2, cy + num * 2, bgColor, 4, 1, 1.0f + num * 0.3f, borderColor);
+		}
+	
+	}
+
+	void DrawScrollBar(HWND hWnd, HRT hdc) {
+		if (fileList.size() * itemHeight <= cy - 50) return;
+
+
+		int maxScrollOffset = std::max(0, (int)fileList.size() - (cy - 50) / itemHeight);
+		scrollOffset = std::max(0, std::min(scrollOffset, maxScrollOffset));
+
+		int visibleHeight = cy - 50;
+		int totalHeight = std::max(1, (int)fileList.size() * itemHeight);
+		int scrollBarHeight = std::max(20, (visibleHeight * visibleHeight) / totalHeight);
+
+		float scrollRatio = (fileList.size() > (cy - 50) / itemHeight) ?
+			static_cast<float>(scrollOffset) / static_cast<float>(maxScrollOffset) : 0.0f;
+		int scrollBarY = y + 40 + static_cast<int>(scrollRatio * (visibleHeight - scrollBarHeight));
+
+		
+		scrollBarY = std::max(y + 40, std::min(y + cy - 15 - scrollBarHeight, scrollBarY));
+
+
+		D2DDrawRoundRect(hdc, x + cx - 15, y + 40, 10, cy - 50,
+			VuiFadeColor(bgColor, 10), 5, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
+
+
+		D2DDrawRoundRect(hdc, x + cx - 15, scrollBarY, 10, scrollBarHeight,
+			VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 20), 5, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
+	}
+
+	void HandleMouseDown(const vinaPoint& pt) {
+		this->IsPushed = true;
+
+
+		int visibleItems = (cy - 50) / itemHeight;
+		int startIndex = scrollOffset;
+		int endIndex = std::min(startIndex + visibleItems + 1, (int)fileList.size());
+
+		for (int i = startIndex; i < endIndex; i++) {
+			if (GetPtInfo(pt, fileList[i].x, fileList[i].y, fileList[i].cx, fileList[i].cy)) {
+				selectedIndex = i;
+				break;
+			}
+		}
+	}
+
+	void HandleMouseUp(const vinaPoint& pt) {
+		this->IsPushed = false;
+
+		int visibleItems = (cy - 50) / itemHeight;
+		int startIndex = scrollOffset;
+		int endIndex = std::min(startIndex + visibleItems + 1, (int)fileList.size());
+
+		for (int i = startIndex; i < endIndex; i++) {
+			if (GetPtInfo(pt, fileList[i].x, fileList[i].y, fileList[i].cx, fileList[i].cy)) {
+				selectedIndex = i;
+				break;
+			}
+		}
+
+		if (selectedIndex >= 0 && selectedIndex < (int)fileList.size()) {
+			FileInfo& file = fileList[selectedIndex];
+
+			if (currentMode == ViewMode::DriveSelection) {
+
+				if (file.name == L"vui.QWQ") {
+
+				}
+				else {
+
+					currentMode = ViewMode::FileBrowser;
+					currentPath = file.path;
+					RefreshFileList();
+				}
+			}
+			else {
+		
+				if (file.isDirectory) {
+					if (file.name == L"计算机") {
+
+						currentMode = ViewMode::DriveSelection;
+						currentPath = L"";
+						RefreshFileList();
+					}
+					else if (file.name == L"..") {
+
+						if (IsRootPath(currentPath)) {
+
+							currentMode = ViewMode::DriveSelection;
+							currentPath = L"";
+							RefreshFileList();
+						}
+						else {
+
+							currentPath = file.path;
+							RefreshFileList();
+						}
+					}
+					else {
+
+						currentPath = file.path;
+						RefreshFileList();
+					}
+					selectedIndex = -1;
+					scrollOffset = 0;
+					hoveredIndex = -1;
+
+					if (pathChangedCallback && currentMode == ViewMode::FileBrowser) {
+						pathChangedCallback(currentPath);
+					}
+				}
+				else {
+					// 选择文件
+					if (fileSelectedCallback) {
+						fileSelectedCallback(file.path);
+					}
+				}
+			}
+		}
+	}
+
+	void HandleMouseMove(const vinaPoint& pt) {
+
+		int visibleItems = (cy - 50) / itemHeight;
+		int startIndex = scrollOffset;
+		int endIndex = std::min(startIndex + visibleItems + 1, (int)fileList.size());
+
+		hoveredIndex = -1;
+		for (int i = startIndex; i < endIndex; i++) {
+			if (GetPtInfo(pt, fileList[i].x, fileList[i].y, fileList[i].cx, fileList[i].cy)) {
+				hoveredIndex = i;
+				break;
+			}
+		}
+	}
+
+	void RefreshFileList() {
+		ClearVector(fileList);
+
+		if (currentMode == ViewMode::DriveSelection) {
+			LoadDriveList();
+		}
+		else {
+			LoadRealFileList();
+		}
+
+
+		selectedIndex = -1;
+		scrollOffset = 0;
+		hoveredIndex = -1;
+	}
+
+	void LoadDriveList() {
+		ClearVector(fileList);
+
+
+		wchar_t drives[1024];
+		DWORD drivesSize = GetLogicalDriveStringsW(1024, drives);
+
+		if (drivesSize > 0 && drivesSize < 1024) {
+			wchar_t* drive = drives;
+			while (*drive) {
+
+				UINT driveType = GetDriveTypeW(drive);
+
+				if (driveType == DRIVE_FIXED || driveType == DRIVE_REMOVABLE || driveType == DRIVE_CDROM) {
+					FileInfo driveInfo;
+					driveInfo.name = drive;
+					driveInfo.path = drive;
+					driveInfo.isDirectory = true;
+					driveInfo.iconPath = L""; 
+					driveInfo.useIconText = false;
+					driveInfo.ap = 0;
+					driveInfo.flag = 0;
+					fileList.push_back(driveInfo);
+				}
+
+				drive += wcslen(drive) + 1;
+			}
+		}
+
+		if (fileList.empty()) {
+			FileInfo noDriveInfo;
+			noDriveInfo.name = L"未找到可用驱动器";
+			noDriveInfo.path = L"";
+			noDriveInfo.isDirectory = false;
+			noDriveInfo.iconPath = L"";
+			noDriveInfo.useIconText = false;
+			noDriveInfo.ap = 0;
+			noDriveInfo.flag = 0;
+			fileList.push_back(noDriveInfo);
+		}
+	}
+
+	void LoadRealFileList() {
+		ClearVector(fileList);
+
+
+		if (!currentPath.empty() && !IsRootPath(currentPath)) {
+			FileInfo parentDir;
+			parentDir.name = L"..";
+			parentDir.path = GetParentPath(currentPath);
+			parentDir.isDirectory = true;
+			parentDir.iconPath = L""; 
+			parentDir.useIconText = true;
+			parentDir.ap = 0;
+			parentDir.flag = 0;
+			fileList.push_back(parentDir);
+		}
+
+
+		if (!currentPath.empty() && IsRootPath(currentPath)) {
+			FileInfo driveSelect;
+			driveSelect.name = L"计算机";
+			driveSelect.path = L"";
+			driveSelect.isDirectory = true;
+			driveSelect.iconPath = L""; 
+			driveSelect.useIconText = true;
+			driveSelect.ap = 0;
+			driveSelect.flag = 0;
+			fileList.push_back(driveSelect);
+		}
+
+
+		if (!currentPath.empty()) {
+			WIN32_FIND_DATAW findData;
+			HANDLE hFind;
+			std::wstring searchPath = currentPath + L"*";
+
+			hFind = FindFirstFileW(searchPath.c_str(), &findData);
+			if (hFind != INVALID_HANDLE_VALUE) {
+				do {
+
+					if (wcscmp(findData.cFileName, L".") == 0) continue;
+
+
+					if (wcscmp(findData.cFileName, L"..") == 0 && !IsRootPath(currentPath)) continue;
+
+					FileInfo fileInfo;
+					fileInfo.name = findData.cFileName;
+					fileInfo.path = currentPath + findData.cFileName;
+					fileInfo.iconPath = L"";
+					fileInfo.useIconText = false;
+					fileInfo.ap = 0;
+					fileInfo.flag = 0;
+
+					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+						fileInfo.isDirectory = true;
+						fileInfo.path += L"\\";
+					}
+					else {
+						fileInfo.isDirectory = false;
+					}
+
+					fileList.push_back(fileInfo);
+				} while (FindNextFileW(hFind, &findData));
+
+				FindClose(hFind);
+			}
+		}
+		this->pathChangedCallback(currentPath);
+	}
+
+	std::wstring GetParentFolderName(const std::wstring& currentName) {
+
+		if (currentName == L"..") {
+
+			std::wstring parentPath = GetParentPath(currentPath);
+			if (!parentPath.empty()) {
+			
+				std::wstring cleanPath = parentPath;
+				if (cleanPath.back() == L'\\' && cleanPath.length() > 1) {
+					cleanPath.pop_back();
+				}
+			
+				size_t pos = cleanPath.find_last_of(L'\\');
+				if (pos != std::wstring::npos) {
+					return cleanPath.substr(pos + 1);
+				}
+				else {
+					return parentPath; 
+				}
+			}
+			return L"上级目录";
+		}
+		return currentName;
+	}
+
+	std::wstring GetFileIconPath(const FileInfo& file) {
+
+		if (file.path.size() > 255)return L"qwq";
+		if (file.name == std::wstring(L"计算机"))return L"qwq";
+		else return file.path;
+	}
+
+	bool IsRootPath(const std::wstring& path) {
+
+		return (path.length() == 3 && path[1] == L':' && path[2] == L'\\');
+	}
+
+	std::wstring GetParentPath(const std::wstring& path) {
+		if (path.length() <= 3) return path;
+
+		std::wstring tempPath = path;
+		if (tempPath.back() == L'\\' && tempPath.length() > 1) {
+			tempPath.pop_back();
+		}
+
+		size_t pos = tempPath.find_last_of(L'\\');
+		if (pos != std::wstring::npos) {
+			return tempPath.substr(0, pos + 1);
+		}
+		return L"C:\\";
+	}
+
+protected:
+	std::wstring currentPath;
+	std::vector<FileInfo> fileList;
+	int itemHeight;
+	int scrollOffset;
+	int selectedIndex;
+	int hoveredIndex;
+	unsigned long bgColor;
+
+	std::function<void(const std::wstring&)> fileSelectedCallback;
+	std::function<void(const std::wstring&)> pathChangedCallback;
+
+	bool Isvalid = true;
+	HWND hWnd;
+	bool IsHoverd = false;
+	bool IsPushed = false;
 };
