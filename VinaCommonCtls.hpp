@@ -1414,15 +1414,16 @@ public:
 		std::wstring path;
 		bool isDirectory;
 		std::wstring iconPath;
-		int x, y, cx, cy; 
-		bool useIconText; 
-		int ap = 0; 
-		int flag = 0; 
+		int x, y, cx, cy;
+		bool useIconText;
+		int ap = 0;
+		int flag = 0;
+		bool isSpecialFolder = false; // 新增：标识是否为特殊文件夹
 	};
 
 	enum class ViewMode {
-		DriveSelection, 
-		FileBrowser    
+		DriveSelection,
+		FileBrowser
 	};
 
 	bool evercreated = false;
@@ -1451,7 +1452,7 @@ public:
 		if (!Isvalid) return;
 		scrollOffset += this->GetParent()->GetInstantScrollDepth() / 6;
 		scrollOffset = GetMinValue(scrollOffset, 0);
-	
+
 		D2DDrawRoundRect(hdc, x, y, cx, cy, bgColor, 8, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
 
 		DrawPathBar(hWnd, hdc);
@@ -1459,7 +1460,6 @@ public:
 		DrawFileList(hWnd, hdc);
 
 		DrawScrollBar(hWnd, hdc);
-
 	}
 
 	virtual int AddEvent(const vinaPoint& pt, vinaEvent eventtype) override {
@@ -1500,16 +1500,13 @@ public:
 		fileSelectedCallback = callback;
 	}
 
-
 	void SetPathDebugCallback(std::function<void(const std::wstring&)> callback) {
 		pathChangedCallback = callback;
 	}
 
 private:
 	void DrawPathBar(HWND hWnd, HRT hdc) {
-
 		D2DDrawRoundRect(hdc, x + 5, y + 5, cx - 10, 30, VuiFadeColor(bgColor, 20), 6, 1, 1.5f, VERTEXUICOLOR_MIDNIGHTPLUS);
-
 
 		std::wstring pathText;
 		if (currentMode == ViewMode::DriveSelection) {
@@ -1519,12 +1516,10 @@ private:
 			pathText = currentPath.empty() ? L"计算机" : currentPath;
 		}
 
-
 		D2DDrawText2(hdc, pathText.c_str(), x + 15, y + 12, cx - 20, 20, 14, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
 	}
 
 	void DrawFileList(HWND hWnd, HRT hdc) {
-
 		int maxScrollOffset = std::max(0, (int)fileList.size() - (cy - 50) / itemHeight);
 		scrollOffset = std::max(0, std::min(scrollOffset, maxScrollOffset));
 
@@ -1541,32 +1536,26 @@ private:
 			fileList[i].cx = cx - 30;
 			fileList[i].cy = itemHeight - 2;
 
-
 			if (itemY + itemHeight < y + 40 || itemY > y + cy - 10) continue;
 
-
-			
 			HandleItemAnimationInCreate(i);
 
-		
 			DrawItemBackground(hdc, i, x + 5, itemY, cx - 30, itemHeight - 2);
 
-	
 			if (!fileList[i].useIconText) {
 				D2DDisplayIcon(hdc, fileList[i].path.c_str(), x + 10, itemY + 5, 20);
 			}
 
 			if (fileList[i].useIconText) {
 				unsigned long txtClr = VERTEXUICOLOR_WHITE;
-				
+
 				D2DDrawText(hdc, L"\uf060", x + 15, itemY + 7, cx - 50, itemHeight - 4, 15, txtClr, L"Font Awesome 6 Free Solid", 1);
-			
+
 				std::wstring displayName = GetParentFolderName(fileList[i].name);
 				D2DDrawText2(hdc, displayName.c_str(), x + 35, itemY + 8, cx - 50, itemHeight - 4,
 					13, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
 			}
 			else {
-			
 				D2DDrawText2(hdc, fileList[i].name.c_str(), x + 35, itemY + 8, cx - 50, itemHeight - 4,
 					13, VERTEXUICOLOR_WHITE, L"Segoe UI", 1, false);
 			}
@@ -1576,13 +1565,10 @@ private:
 	void HandleItemAnimationInCreate(int index) {
 		FileInfo& file = fileList[index];
 
-	
 		bool isHovered = (index == hoveredIndex);
 
 		if (isHovered) {
-			// 悬停
 			if (file.flag == 0) {
-				//GlobalAnimationCount++;
 				file.flag = 1;
 			}
 			if (file.ap < 10) {
@@ -1593,9 +1579,7 @@ private:
 			}
 		}
 		else {
-			
 			if (file.flag == 0) {
-				//GlobalAnimationCount++;
 				file.flag = 1;
 			}
 			if (file.ap > 0) {
@@ -1603,14 +1587,12 @@ private:
 			}
 			if (file.ap == 0) {
 				file.flag = 0;
-				//GlobalAnimationCount--;
 			}
 		}
 	}
 
 	void DrawItemBackground(HRT hdc, int index, int x, int y, int cx, int cy) {
 		FileInfo& file = fileList[index];
-
 
 		float num = 0;
 		if (file.ap > 0) {
@@ -1621,9 +1603,8 @@ private:
 		unsigned long borderColor = VERTEXUICOLOR_MIDNIGHTPLUS;
 
 		if (index == selectedIndex) {
-	
 			bgColor = VERTEXUICOLOR_SEA;
-		
+
 			if (num > 0) {
 				int nR = GetMaxValue(GetRValue(bgColor) + (int)(num * 20), 255);
 				int nG = GetMaxValue(GetGValue(bgColor) + (int)(num * 20), 255);
@@ -1633,11 +1614,9 @@ private:
 			D2DDrawRoundRect(hdc, x + num, y + num, cx - num * 2, cy - num * 2, bgColor, 4, 1, 1.0f, borderColor);
 		}
 		else if (file.ap > 0 || index == hoveredIndex) {
-			
 			int alpha = (int)(30 * (file.ap / 10.0f));
 			bgColor = VuiFadeColor(VERTEXUICOLOR_MIDNIGHT, alpha);
 
-		
 			int nR = GetMaxValue(GetRValue(bgColor) + (int)(num * 15), 255);
 			int nG = GetMaxValue(GetGValue(bgColor) + (int)(num * 15), 255);
 			int nB = GetMaxValue(GetBValue(bgColor) + (int)(num * 15), 255);
@@ -1645,12 +1624,10 @@ private:
 
 			D2DDrawRoundRect(hdc, x - num, y - num, cx + num * 2, cy + num * 2, bgColor, 4, 1, 1.0f + num * 0.3f, borderColor);
 		}
-	
 	}
 
 	void DrawScrollBar(HWND hWnd, HRT hdc) {
 		if (fileList.size() * itemHeight <= cy - 50) return;
-
 
 		int maxScrollOffset = std::max(0, (int)fileList.size() - (cy - 50) / itemHeight);
 		scrollOffset = std::max(0, std::min(scrollOffset, maxScrollOffset));
@@ -1663,13 +1640,10 @@ private:
 			static_cast<float>(scrollOffset) / static_cast<float>(maxScrollOffset) : 0.0f;
 		int scrollBarY = y + 40 + static_cast<int>(scrollRatio * (visibleHeight - scrollBarHeight));
 
-		
 		scrollBarY = std::max(y + 40, std::min(y + cy - 15 - scrollBarHeight, scrollBarY));
-
 
 		D2DDrawRoundRect(hdc, x + cx - 15, y + 40, 10, cy - 50,
 			VuiFadeColor(bgColor, 10), 5, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
-
 
 		D2DDrawRoundRect(hdc, x + cx - 15, scrollBarY, 10, scrollBarHeight,
 			VuiFadeColor(VERTEXUICOLOR_MIDNIGHTPLUS, 20), 5, 1, 1.0f, VERTEXUICOLOR_MIDNIGHTPLUS);
@@ -1677,7 +1651,6 @@ private:
 
 	void HandleMouseDown(const vinaPoint& pt) {
 		this->IsPushed = true;
-
 
 		int visibleItems = (cy - 50) / itemHeight;
 		int startIndex = scrollOffset;
@@ -1709,42 +1682,35 @@ private:
 			FileInfo& file = fileList[selectedIndex];
 
 			if (currentMode == ViewMode::DriveSelection) {
-
 				if (file.name == L"vui.QWQ") {
-
+					// 特殊处理
 				}
 				else {
-
 					currentMode = ViewMode::FileBrowser;
 					currentPath = file.path;
 					RefreshFileList();
 				}
 			}
 			else {
-		
 				if (file.isDirectory) {
 					if (file.name == L"计算机") {
-
 						currentMode = ViewMode::DriveSelection;
 						currentPath = L"";
 						RefreshFileList();
 					}
 					else if (file.name == L"..") {
-
 						if (IsRootPath(currentPath)) {
-
 							currentMode = ViewMode::DriveSelection;
 							currentPath = L"";
 							RefreshFileList();
 						}
 						else {
-
 							currentPath = file.path;
 							RefreshFileList();
 						}
 					}
 					else {
-
+						// 对于特殊文件夹，直接使用其路径
 						currentPath = file.path;
 						RefreshFileList();
 					}
@@ -1767,7 +1733,6 @@ private:
 	}
 
 	void HandleMouseMove(const vinaPoint& pt) {
-
 		int visibleItems = (cy - 50) / itemHeight;
 		int startIndex = scrollOffset;
 		int endIndex = std::min(startIndex + visibleItems + 1, (int)fileList.size());
@@ -1791,7 +1756,6 @@ private:
 			LoadRealFileList();
 		}
 
-
 		selectedIndex = -1;
 		scrollOffset = 0;
 		hoveredIndex = -1;
@@ -1800,14 +1764,13 @@ private:
 	void LoadDriveList() {
 		ClearVector(fileList);
 
-
+		// 加载逻辑驱动器
 		wchar_t drives[1024];
 		DWORD drivesSize = GetLogicalDriveStringsW(1024, drives);
 
 		if (drivesSize > 0 && drivesSize < 1024) {
 			wchar_t* drive = drives;
 			while (*drive) {
-
 				UINT driveType = GetDriveTypeW(drive);
 
 				if (driveType == DRIVE_FIXED || driveType == DRIVE_REMOVABLE || driveType == DRIVE_CDROM) {
@@ -1815,14 +1778,58 @@ private:
 					driveInfo.name = drive;
 					driveInfo.path = drive;
 					driveInfo.isDirectory = true;
-					driveInfo.iconPath = L""; 
+					driveInfo.iconPath = L"";
 					driveInfo.useIconText = false;
 					driveInfo.ap = 0;
 					driveInfo.flag = 0;
+					driveInfo.isSpecialFolder = false; // 普通驱动器
 					fileList.push_back(driveInfo);
 				}
 
 				drive += wcslen(drive) + 1;
+			}
+		}
+
+		// 添加快速访问项：桌面 和 文档
+		{
+			// 获取桌面路径
+			PWSTR desktopPath = nullptr;
+			if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Desktop, 0, NULL, &desktopPath))) {
+				FileInfo desktopInfo;
+				desktopInfo.name = L"桌面";
+				desktopInfo.path = desktopPath;
+				// 确保路径以反斜杠结尾
+				if (!desktopInfo.path.empty() && desktopInfo.path.back() != L'\\') {
+					desktopInfo.path += L"\\";
+				}
+				desktopInfo.isDirectory = true;
+				desktopInfo.iconPath = L"";
+				desktopInfo.useIconText = false;
+				desktopInfo.ap = 0;
+				desktopInfo.flag = 0;
+				desktopInfo.isSpecialFolder = true; // 标记为特殊文件夹
+				fileList.push_back(desktopInfo);
+				CoTaskMemFree(desktopPath);
+			}
+
+			// 获取文档路径
+			PWSTR documentsPath = nullptr;
+			if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &documentsPath))) {
+				FileInfo documentsInfo;
+				documentsInfo.name = L"文档";
+				documentsInfo.path = documentsPath;
+				// 确保路径以反斜杠结尾
+				if (!documentsInfo.path.empty() && documentsInfo.path.back() != L'\\') {
+					documentsInfo.path += L"\\";
+				}
+				documentsInfo.isDirectory = true;
+				documentsInfo.iconPath = L"";
+				documentsInfo.useIconText = false;
+				documentsInfo.ap = 0;
+				documentsInfo.flag = 0;
+				documentsInfo.isSpecialFolder = true; // 标记为特殊文件夹
+				fileList.push_back(documentsInfo);
+				CoTaskMemFree(documentsPath);
 			}
 		}
 
@@ -1835,6 +1842,7 @@ private:
 			noDriveInfo.useIconText = false;
 			noDriveInfo.ap = 0;
 			noDriveInfo.flag = 0;
+			noDriveInfo.isSpecialFolder = false;
 			fileList.push_back(noDriveInfo);
 		}
 	}
@@ -1842,45 +1850,44 @@ private:
 	void LoadRealFileList() {
 		ClearVector(fileList);
 
-
+		// 添加返回上级目录的选项（如果不是根路径）
 		if (!currentPath.empty() && !IsRootPath(currentPath)) {
 			FileInfo parentDir;
 			parentDir.name = L"..";
 			parentDir.path = GetParentPath(currentPath);
 			parentDir.isDirectory = true;
-			parentDir.iconPath = L""; 
+			parentDir.iconPath = L"";
 			parentDir.useIconText = true;
 			parentDir.ap = 0;
 			parentDir.flag = 0;
+			parentDir.isSpecialFolder = false;
 			fileList.push_back(parentDir);
 		}
 
-
+		// 如果是根路径，添加返回计算机的选项
 		if (!currentPath.empty() && IsRootPath(currentPath)) {
 			FileInfo driveSelect;
 			driveSelect.name = L"计算机";
 			driveSelect.path = L"";
 			driveSelect.isDirectory = true;
-			driveSelect.iconPath = L""; 
+			driveSelect.iconPath = L"";
 			driveSelect.useIconText = true;
 			driveSelect.ap = 0;
 			driveSelect.flag = 0;
+			driveSelect.isSpecialFolder = false;
 			fileList.push_back(driveSelect);
 		}
 
-
+		// 加载当前路径下的文件和文件夹
 		if (!currentPath.empty()) {
 			WIN32_FIND_DATAW findData;
 			HANDLE hFind;
-			std::wstring searchPath = currentPath + L"*";
+			std::wstring searchPath = currentPath + L"*"; // 确保路径格式正确
 
 			hFind = FindFirstFileW(searchPath.c_str(), &findData);
 			if (hFind != INVALID_HANDLE_VALUE) {
 				do {
-
 					if (wcscmp(findData.cFileName, L".") == 0) continue;
-
-
 					if (wcscmp(findData.cFileName, L"..") == 0 && !IsRootPath(currentPath)) continue;
 
 					FileInfo fileInfo;
@@ -1890,6 +1897,7 @@ private:
 					fileInfo.useIconText = false;
 					fileInfo.ap = 0;
 					fileInfo.flag = 0;
+					fileInfo.isSpecialFolder = false;
 
 					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 						fileInfo.isDirectory = true;
@@ -1905,27 +1913,26 @@ private:
 				FindClose(hFind);
 			}
 		}
-		this->pathChangedCallback(currentPath);
+
+		if (pathChangedCallback) {
+			pathChangedCallback(currentPath);
+		}
 	}
 
 	std::wstring GetParentFolderName(const std::wstring& currentName) {
-
 		if (currentName == L"..") {
-
 			std::wstring parentPath = GetParentPath(currentPath);
 			if (!parentPath.empty()) {
-			
 				std::wstring cleanPath = parentPath;
 				if (cleanPath.back() == L'\\' && cleanPath.length() > 1) {
 					cleanPath.pop_back();
 				}
-			
 				size_t pos = cleanPath.find_last_of(L'\\');
 				if (pos != std::wstring::npos) {
 					return cleanPath.substr(pos + 1);
 				}
 				else {
-					return parentPath; 
+					return parentPath;
 				}
 			}
 			return L"上级目录";
@@ -1934,14 +1941,12 @@ private:
 	}
 
 	std::wstring GetFileIconPath(const FileInfo& file) {
-
 		if (file.path.size() > 255)return L"qwq";
 		if (file.name == std::wstring(L"计算机"))return L"qwq";
 		else return file.path;
 	}
 
 	bool IsRootPath(const std::wstring& path) {
-
 		return (path.length() == 3 && path[1] == L':' && path[2] == L'\\');
 	}
 

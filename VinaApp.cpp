@@ -12,11 +12,12 @@
 #include "VertexUI/VertexUI.min.h"
 #include "MainUI.hpp"
 
-#define VERSION_STR L"v0.1.0"
+#define VERSION_STR L"v0.1.1"
 VertexUIInit;
 #define MAX_LOADSTRING 100
 
 static bool IsCfg = false;
+static bool IslfLatest = false;
 static bool UpdateMode = false;
 short DownloadProgress;
 enum class UpdateStatus {
@@ -46,7 +47,7 @@ std::thread thCheckUpdate;
 std::thread thUpdate;
 std::mutex mutexUpdateLocalData;
 UpdateStatus mUpdateStatus = UpdateStatus::PENDING;
-
+std::wstring gCmdLine;
 
 
 bool CheckUpdate(Project proj) {
@@ -119,17 +120,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SetDataBase();
     InitGlobalD2D();
 
+    std::wstring _CmdLine = lpCmdLine;
+    gCmdLine = lpCmdLine;
+    if(gCmdLine==std::wstring(L"lightframe_manual")) _CmdLine =L"lightframe";
     bool bParseSuccess = false;
     Json::Value paramsRoot;
     Json::Reader jsonReader;
     CheckLightFrame();
     try {
-        if (jsonReader.parse(ws2s(lpCmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
+        if (jsonReader.parse(ws2s(_CmdLine), paramsRoot) && paramsRoot.isMember("project") && paramsRoot["project"].isString()) {
+            if (paramsRoot["project"].asString() == "lightframe_manual")
+            {
+                bParseSuccess = true;
+
+                if (CheckUpdate(Project::LIGHTFRAME));
+                   
+                else  IsCfg = true, UpdateMode = true, IslfLatest = true;
+            }
             if (paramsRoot["project"].asString() == "lightframe") {
                 bParseSuccess = true;
 
                 if (CheckUpdate(Project::LIGHTFRAME))
                     IsCfg = true, UpdateMode = true;
+                else if (gCmdLine == std::wstring(L"lightframe_manual"))
+                {
+                    IslfLatest = true;
+                }
                 else return 0;
             }
         }
@@ -139,9 +155,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    if (std::wstring(lpCmdLine).size() && !bParseSuccess)return 0;
+    if (std::wstring(_CmdLine).size() && !bParseSuccess)return 0;
 
-    if (!std::wstring(lpCmdLine).size()) {
+    if (!std::wstring(_CmdLine).size()) {
         thCheckUpdate = std::thread([&] {
             if(CheckUpdate(Project::LIGHTFRAME))
                 ClearVector(btns);
@@ -286,7 +302,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                     XSleep(5);
                     Refresh(hWnd);
                     MainWindow->KillAnimation();
-                } IsCfg = false; isAbout = false;  isSelect =false ; Refresh(hWnd); ExtraMsg = true; });
+                } IsCfg = false; IslfLatest = false; isAbout = false; isVersionPage = false;  isSelect = false; Refresh(hWnd); ExtraMsg = true; });
                 MainWindow->GetPanel()->Add(bk);
 
 
@@ -337,6 +353,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                     MainWindow->GetPanel()->Add(test3);
                 }
+                else if (IslfLatest == true)
+                {
+                    TCHAR strExeFullDir[MAX_PATH];
+
+                    GetModuleFileName(NULL, strExeFullDir, MAX_PATH);
+
+                    ID2D1Bitmap* bm = D2DCreateIconBitmap(hrt, project[L"lightframe"].InstallPath.c_str(), 256);
+
+                    D2DDrawBitmapFrompBm(hrt, bm, 425, 100 + 100 - AnimateMove, GetMinValue(GetMaxValue(AnimateMove / 1.2, 80), 1));
+                    SafeRelease(&bm);
+                    D2DDrawText3(hrt, std::wstring(L"PROJECT LIGHTFRAME\n" + std::wstring(project[L"lightframe"].LocalVersion)).c_str(), 25, 100 + 100 - AnimateMove, rc.right / gScale, 30, GetMinValue(GetMaxValue(AnimateMove / 3, 32), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+                    D2DDrawText(hrt, L"当前已经为最新或更新的版本。", 25, 210 + 100 - AnimateMove, rc.right / gScale, 30, GetMinValue(GetMaxValue(AnimateMove / 3, 16), 1), VERTEXUICOLOR_WHITE, L"Segoe UI", 0.8);
+
+                    static std::shared_ptr<VinaButton>test2 = std::make_shared<VinaButton>();
+
+                    test2->Set(25, 280 + 100 - AnimateMove, 80, 25, L"确定", [hWnd] {	MainWindow->KillAnimation(); PostQuitMessage(0); }, RGB(82, 121, 251), 12.5);
+
+                    MainWindow->GetPanel()->Add(test2);
+
+                }
                 else if (isSelect == true)
                 {
                     D2DDrawText3(hrt, L"选择下载目录", rc.right / gScale / 2 - 600 / 2, 55 + 100 - AnimateMove,200,40,20, VERTEXUICOLOR_WHITE);
@@ -358,7 +394,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
                     nxt->Set(rc.right / gScale  - 125, 160 + 360 - AnimateMove, 65, L"test-right-dld", 22, VERTEXUICOLOR_WHITE, [hWnd] {
                         isSelect = false;
-                        project[L"lightframe"].BuildDate= L"Jun 1 2023";
+                        project[L"lightframe"].BuildDate= L"Jan 1 2023";
                         CheckUpdate(Project::LIGHTFRAME);
                         Refresh(hWnd);
                         return 0;
@@ -580,6 +616,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         });
 
     MainWindow->SetOutFrame(VinaWindow::Client);
+    MainWindow->OnCreateCmd = [] {
+        CenterWindow(MainWindow->GetHandle());
+    };
     MainWindow->RunFull();
 
     return 0;

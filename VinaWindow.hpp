@@ -326,6 +326,7 @@ public:
 	D2DVertexUIPanel* GetPanel() {
 		return this->NewUIPanel;
 	}
+	std::function<void()> OnCreateCmd = __noop;//Add some function such as animation and so on.
 	int RunFull() { if (!this->Create()) { return FALSE; } MSG msg; while (GetMessage(&msg, nullptr, 0, 0)) { {TranslateMessage(&msg); DispatchMessage(&msg); } }return (int)msg.wParam; }
 protected:
 	FunctionalProc extrafunc;
@@ -353,7 +354,7 @@ protected:
 	int Height = 200;
 	int NoOuterFrame = 0;
 	HWND hWnd;//A Copy of hWnd.
-	RUNFUN(*OnCreateCmd)() = __noop;//Add some function such as animation and so on.
+
 	bool CheckExtension = true;//Extension will be not avaliable anymore if never check it.Only can be used for LightFrame components inner core.
 	bool DependOnLightFrameMain = false;//Extension will lost it's sign if disable this option.
 	ATOM __RegisterClass() { WNDCLASSEXW wcex; wcex.cbSize = sizeof(WNDCLASSEX); wcex.style = CS_HREDRAW | CS_VREDRAW; wcex.lpfnWndProc = this->WndProc; wcex.cbClsExtra = 0; wcex.cbWndExtra = 0; wcex.hInstance = this->hInst; wcex.hIcon = LoadIcon(this->hInst, this->hIcon); wcex.hCursor = LoadCursor(nullptr, IDC_ARROW); wcex.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH); wcex.hbrBackground = (HBRUSH)CreateSolidBrush(this->BkColor); wcex.lpszMenuName = 0; wcex.lpszClassName = this->szWindowClass; wcex.hIconSm = LoadIcon(wcex.hInstance, this->hIcon); return RegisterClassExW(&wcex); }
